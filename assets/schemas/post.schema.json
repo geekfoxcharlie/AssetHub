@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:post",
+  "title": "Post",
+  "description": "A public short-form post from any platform.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["content"],
+  "properties": {
+    "content": { "type": "string", "minLength": 1 },
+    "platform": { "type": "string" },
+    "url": { "type": "string", "format": "uri" },
+    "author": { "type": "string" },
+    "published_at": { "type": "string", "format": "date-time" },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "content": "Records live as files. SQLite is just the catalog.",
+      "platform": "x",
+      "url": "https://example.com/posts/1",
+      "author": "hub",
+      "published_at": "2024-09-18T16:05:00Z",
+      "metrics": { "likes": 12, "reposts": 3 },
+      "tags": ["local-first"]
+    }
+  ]
+}

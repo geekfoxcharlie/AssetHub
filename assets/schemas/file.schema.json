@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:file",
+  "title": "File",
+  "description": "A generic attachment such as a PDF, archive, or snapshot.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "title": "Storage notes",
+      "description": "Local storage notes, kept as an attachment.",
+      "tags": ["storage"]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:image",
+  "title": "Image",
+  "description": "An image asset. The bytes belong in the record's files, not in data.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string" },
+    "caption": { "type": "string" },
+    "alt": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "title": "Catalog sketch",
+      "caption": "Shelves as namespaces, drawers as granted schemas.",
+      "alt": "Line drawing of a small catalog hall with labeled drawers",
+      "tags": ["diagram"]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "assethub",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Local structured-data storage: records are folders (record.json plus attachments) under project namespaces, validated by schemas, browsed in a read-only web page.",
+  "type": "module",
+  "bin": {
+    "assethub": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-assets.mjs && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "demo": "npm run build && node dist/cli.js demo --data-dir .demo"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

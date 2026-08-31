@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:note",
+  "title": "Note",
+  "description": "A short written record: an idea, observation, or memo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "content": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "title": "Search should be literal",
+      "content": "Query text is matched as a substring. Wildcards in the query are not glob syntax.",
+      "tags": ["search"]
+    }
+  ]
+}

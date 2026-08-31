@@ -1,0 +1,9 @@
+{
+  "title": "Indexing local files",
+  "author": "Ada Lovelace",
+  "url": "https://example.com/articles/indexing-local-files",
+  "published_at": "2024-03-12T09:00:00Z",
+  "status": "published",
+  "content": "Keep the record on disk. Treat the database as a catalog, not the source of truth.",
+  "tags": ["local-first", "sqlite"]
+}

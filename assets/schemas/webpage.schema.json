@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:webpage",
+  "title": "Webpage",
+  "description": "A saved page or snapshot. Attach the capture as a file on the record.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url"],
+  "properties": {
+    "url": { "type": "string", "format": "uri" },
+    "title": { "type": "string" },
+    "excerpt": { "type": "string" },
+    "fetched_at": { "type": "string", "format": "date-time" },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "examples": [
+    {
+      "url": "https://example.com/docs/local-first",
+      "title": "Local-first software",
+      "excerpt": "Software you can use offline, that stores data on your device, and can still sync.",
+      "fetched_at": "2024-06-01T14:30:00Z",
+      "tags": ["local-first"]
+    }
+  ]
+}
