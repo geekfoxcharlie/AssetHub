@@ -43,55 +43,104 @@ function fmtDate(iso: string): string {
 }
 
 const CSS = `
-:root { --ink:#1d2833; --mut:#68758a; --line:#e2e7ee; --bg:#f6f8fa; --card:#ffffff; --accent:#1c5fd6; }
-* { box-sizing:border-box; }
-body { margin:0; color:var(--ink); background:var(--bg); font:15px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
-a { color:var(--accent); text-decoration:none; }
-a:hover { text-decoration:underline; }
-header { background:var(--card); border-bottom:1px solid var(--line); }
-header .wrap { display:flex; align-items:baseline; gap:8px; padding:12px 20px; font-size:13px; color:var(--mut); flex-wrap:wrap; }
-.brand { font-weight:650; font-size:14px; color:var(--ink); letter-spacing:.02em; }
-main.wrap { max-width:920px; margin:0 auto; padding:28px 20px 72px; }
-footer { max-width:920px; margin:0 auto; padding:0 20px 40px; color:var(--mut); font-size:12px; }
-h1 { font-size:24px; line-height:1.35; margin:0 0 6px; }
-.muted { color:var(--mut); }
-.mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; }
-.badges { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 18px; }
-.badge { display:inline-block; padding:2px 9px; border:1px solid var(--line); border-radius:999px; background:var(--card); font-size:12px; color:var(--mut); }
-.badge.schema { color:var(--accent); border-color:#c9dcf7; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
-.card h3 { margin:0 0 4px; font-size:15px; }
-.card .sub { color:var(--mut); font-size:12.5px; }
-.count { float:right; font-size:12px; color:var(--mut); }
-table.fields { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; }
-table.fields th, table.fields td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-table.fields tr:last-child th, table.fields tr:last-child td { border-bottom:0; }
-table.fields th { color:var(--mut); font-weight:500; white-space:nowrap; width:1%; }
-.prose { white-space:pre-wrap; font-size:15.5px; }
-.imgs { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); margin:14px 0; }
-.imgs figure { margin:0; }
-.imgs img { width:100%; display:block; border:1px solid var(--line); border-radius:10px; background:var(--card); }
-.imgs figcaption { font-size:12px; color:var(--mut); margin-top:4px; }
-ul.atts { list-style:none; padding:0; margin:8px 0 0; }
-ul.atts li { padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; display:flex; justify-content:space-between; gap:12px; }
-ul.atts li:last-child { border-bottom:0; }
-ul.atts .meta { color:var(--mut); font-size:12.5px; white-space:nowrap; }
-.btn { display:inline-block; padding:7px 16px; border-radius:9px; border:1px solid #c9dcf7; background:#eef4fd; color:var(--accent); font-size:14px; }
-.btn:hover { text-decoration:none; background:#e2edfc; }
-.folder-list { display:flex; flex-direction:column; gap:6px; margin:0 0 22px; }
-.folder-list a { display:block; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; }
-.folder-list a:hover { border-color:var(--accent); text-decoration:none; }
-.view-card { max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 24px; }
-.view-card .head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:10px; }
-.view-card .author { font-weight:650; }
-.view-article { max-width:680px; margin:0 auto; }
-.view-article .prose { font-size:17px; line-height:1.9; }
-.view-article .byline { color:var(--mut); font-size:13.5px; margin:0 0 26px; }
-.gallery-first .imgs { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
-section.block { margin:26px 0; }
-h2.block { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); margin:30px 0 10px; }
-.empty { color:var(--mut); background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:28px; text-align:center; }
+:root{
+  --bg:#faf9f7; --surface:#ffffff;
+  --ink:#1b1d20; --soft:#3c434c; --mut:#707780; --faint:#9aa0a8;
+  --line:#e8e5df; --line-strong:#d6d2c9;
+  --accent:#0f766e; --accent-soft:#e3f0ee;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--accent)}
+::selection{background:var(--accent-soft)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.topbar{position:sticky;top:0;z-index:10;background:rgba(250,249,247,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.topbar .inner{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:11px 24px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;font-size:14px;letter-spacing:.01em;flex-shrink:0}
+.brand .dot{width:9px;height:9px;border-radius:3px;background:var(--accent)}
+.breadcrumbs{font-family:var(--mono);font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;white-space:nowrap}
+.breadcrumbs a:hover{color:var(--ink)}
+.breadcrumbs .sep{color:var(--faint)}
+.breadcrumbs .tail{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+
+main{max-width:880px;margin:0 auto;padding:36px 24px 88px}
+
+.page-head{margin:0 0 22px}
+.page-head h1{font-size:22px;font-weight:650;letter-spacing:-.01em;line-height:1.3;margin:0 0 6px}
+.page-head .sub{color:var(--mut);font-size:13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.muted{color:var(--mut)}
+.mono{font-family:var(--mono)}
+
+.section-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin:30px 0 6px}
+
+.list{border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:14px;padding:13px 2px;border-bottom:1px solid var(--line)}
+a.row:hover .title{color:var(--accent)}
+.row .badge{flex-shrink:0}
+.row .grow{flex:1;min-width:0}
+.row .title{display:block;font-weight:550;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .desc{display:block;color:var(--mut);font-size:12.5px;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{flex-shrink:0;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;line-height:1;padding:4px 7px;border:1px solid var(--line-strong);border-radius:4px;color:var(--mut);background:var(--surface)}
+.badge.accent{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+
+table.fields{width:100%;border-collapse:collapse;font-size:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+table.fields th,table.fields td{text-align:left;padding:10px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+table.fields tr:last-child th,table.fields tr:last-child td{border-bottom:0}
+table.fields th{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--mut);white-space:nowrap;width:1%;padding-top:12px}
+table.fields td{color:var(--ink)}
+table.kv{display:inline-table;border-collapse:collapse;font-size:13px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+table.kv td{padding:5px 12px;border-bottom:1px solid var(--line)}
+table.kv tr:last-child td{border-bottom:0}
+table.kv .kv-key{font-family:var(--mono);font-weight:500;color:var(--mut);white-space:nowrap;border-right:1px solid var(--line);background:var(--bg)}
+table.kv .kv-val{font-variant-numeric:tabular-nums;color:var(--ink)}
+
+.prose{white-space:pre-wrap;line-height:1.75;font-size:15.5px;color:var(--soft)}
+
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:22px 0}
+.imgs figure{margin:0}
+.imgs img{width:100%;display:block;aspect-ratio:16/10;object-fit:cover;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.imgs figcaption{font-family:var(--mono);font-size:11.5px;color:var(--mut);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+ul.atts{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+ul.atts li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:14px}
+ul.atts li:last-child{border-bottom:0}
+ul.atts .name{font-family:var(--mono);font-size:13px;color:var(--ink)}
+ul.atts a:hover .name{color:var(--accent)}
+ul.atts .meta{color:var(--mut);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.btn{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:550;padding:8px 15px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn .arrow{font-family:var(--mono)}
+
+.view-card{max-width:640px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px 28px}
+.view-card .head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.view-card .avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:650;font-size:15px;flex-shrink:0}
+.view-card .who{flex:1;min-width:0;display:flex;flex-direction:column}
+.view-card .author{font-weight:600;font-size:14.5px}
+.view-card .time{color:var(--mut);font-size:12px}
+.view-card .prose{font-size:15px}
+.view-card .imgs{margin-top:18px}
+
+.view-article{max-width:680px;margin:0 auto}
+.view-article h1{font-size:26px;line-height:1.4;letter-spacing:-.01em;margin:0 0 8px}
+.view-article .byline{color:var(--mut);font-size:13.5px;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.view-article .prose{font-size:16.5px;line-height:1.9;color:var(--ink)}
+
+.gallery-first .imgs{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+
+.empty{border:1px dashed var(--line-strong);border-radius:10px;padding:46px 24px;text-align:center;color:var(--mut)}
+.empty h1{font-size:18px;color:var(--ink);margin:0 0 8px}
+.empty p{margin:0}
+.empty code{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--soft)}
+
+footer{max-width:880px;margin:0 auto;padding:0 24px 44px;color:var(--faint);font-size:12px;font-family:var(--mono)}
 `;
 
 export interface Crumb {
@@ -99,12 +148,18 @@ export interface Crumb {
   href?: string;
 }
 
+function renderBreadcrumbs(crumbs: Crumb[]): string {
+  const parts = crumbs.map((c, i) => {
+    const last = i === crumbs.length - 1;
+    const label = esc(c.label);
+    if (last) return `<span class="tail">${label}</span>`;
+    return c.href !== undefined ? `<a href="${esc(c.href)}">${label}</a>` : `<span>${label}</span>`;
+  });
+  return `<nav class="breadcrumbs" aria-label="path">${parts.join('<span class="sep">/</span>')}</nav>`;
+}
+
 export function layout(title: string, crumbs: Crumb[], body: string): string {
-  const trail = crumbs
-    .map((c) =>
-      c.href !== undefined ? `<a href="${esc(c.href)}">${esc(c.label)}</a>` : `<span>${esc(c.label)}</span>`,
-    )
-    .join('<span class="muted">/</span>');
+  const trail = crumbs.length ? renderBreadcrumbs(crumbs) : "";
   return `<!doctype html>
 <html lang="zh">
 <head>
@@ -114,8 +169,8 @@ export function layout(title: string, crumbs: Crumb[], body: string): string {
 <style>${CSS}</style>
 </head>
 <body>
-<header><div class="wrap"><a class="brand" href="/">AssetHub</a>${trail ? `<span class="muted">·</span>${trail}` : ""}</div></header>
-<main class="wrap">
+<header class="topbar"><div class="inner"><a class="brand" href="/"><span class="dot"></span>AssetHub</a>${trail}</div></header>
+<main>
 ${body}
 </main>
 <footer>read-only view · writes happen through the assethub CLI</footer>
@@ -137,18 +192,18 @@ export interface NamespaceCard {
 }
 
 export function namespacePage(items: NamespaceCard[]): string {
-  const cards = items
+  const rows = items
     .map(
-      (n) => `    <a class="card" href="/n/${encodeURIComponent(n.id)}">
-      <h3>${esc(n.id)} <span class="count">${n.records} records</span></h3>
-      <div class="sub">${esc(n.name)}${n.goal ? ` — ${esc(n.goal)}` : ""}</div>
+      (n) => `    <a class="row" href="/n/${encodeURIComponent(n.id)}">
+      <span class="grow"><span class="title">${esc(n.name)}</span><span class="desc">${esc(n.id)}${n.goal ? ` · ${esc(n.goal)}` : ""}</span></span>
+      <span class="meta">${n.records} records</span>
     </a>`,
     )
     .join("\n");
   const body = items.length
-    ? `  <h1>Namespaces</h1>\n  <div class="grid">\n${cards}\n  </div>`
-    : `  <div class="empty"><h1>No namespaces yet</h1><p>Create one with <span class="mono">assethub namespace add &lt;id&gt;</span>, or run <span class="mono">assethub demo</span>.</p></div>`;
-  return layout("Namespaces", [{ label: "namespaces" }], body);
+    ? `  <div class="page-head"><h1>Namespaces</h1><div class="sub">First-level folders under the data root — one per project.</div></div>\n  <div class="list">\n${rows}\n  </div>`
+    : `  <div class="empty"><h1>No namespaces yet</h1><p>Create one with <code>assethub namespace add &lt;id&gt;</code>, or run <code>assethub demo</code>.</p></div>`;
+  return layout("Namespaces", [], body);
 }
 
 // -------------------------------------------------------------- folder browser
@@ -176,19 +231,24 @@ export function folderPage(ns: string, sub: string[], folders: FolderEntry[], re
   const parts: string[] = [];
   if (folders.length) {
     parts.push(
-      `  <div class="folder-list">\n${folders
-        .map((f) => `    <a href="${esc(f.href)}">📁 ${esc(f.name)} <span class="count">${f.records} records</span></a>`)
+      `  <div class="section-title">Folders</div>\n  <div class="list">\n${folders
+        .map(
+          (f) => `    <a class="row" href="${esc(f.href)}">
+      <span class="grow"><span class="title">${esc(f.name)}</span></span>
+      <span class="meta">${f.records} records</span>
+    </a>`,
+        )
         .join("\n")}\n  </div>`,
     );
   }
   if (records.length) {
     parts.push(
-      `  <div class="grid">\n${records
+      `  <div class="section-title">Records</div>\n  <div class="list">\n${records
         .map(
-          (r) => `    <a class="card" href="${esc(r.href)}">
-      <h3>${esc(r.title)}</h3>
-      <div class="sub"><span class="badge schema">${esc(r.schema)}</span> ${esc(r.created)}</div>
-      <div class="sub mono">${esc(r.id)}</div>
+          (r) => `    <a class="row" href="${esc(r.href)}">
+      <span class="badge accent">${esc(r.schema)}</span>
+      <span class="grow"><span class="title">${esc(r.title)}</span><span class="desc">${esc(r.id)}</span></span>
+      <span class="meta">${esc(r.created)}</span>
     </a>`,
         )
         .join("\n")}\n  </div>`,
@@ -197,8 +257,9 @@ export function folderPage(ns: string, sub: string[], folders: FolderEntry[], re
   if (!parts.length) {
     parts.push(`  <div class="empty"><p>This folder is empty.</p></div>`);
   }
-  const heading = sub.length ? esc(sub[sub.length - 1] ?? ns) : esc(ns);
-  return layout(`${ns}/${sub.join("/")}`, crumbs, `  <h1>${heading}</h1>\n  <div class="badges"><span class="badge">namespace ${esc(ns)}</span></div>\n${parts.join("\n")}`);
+  const heading = sub.length ? sub[sub.length - 1] ?? ns : ns;
+  const body = `  <div class="page-head"><h1>${esc(heading)}</h1><div class="sub"><span class="badge">${esc(ns)}</span></div></div>\n${parts.join("\n")}`;
+  return layout(`${ns}/${sub.join("/")}`, crumbs, body);
 }
 
 // ----------------------------------------------------------------- record page
@@ -228,10 +289,10 @@ function attachmentsList(files: Attachment[], rawBase: string): string {
     .map((f) => {
       const href = `${rawBase}/${encodeURIComponent(f.name)}`;
       const inline = f.mime.startsWith("image/");
-      return `    <li><a href="${esc(href)}">${inline ? "🖼" : "📄"} ${esc(f.name)}</a><span class="meta">${esc(f.mime)} · ${fmtBytes(f.bytes)}</span></li>`;
+      return `    <li><a href="${esc(href)}"><span class="name">${esc(f.name)}</span></a><span class="meta">${esc(f.mime)} · ${fmtBytes(f.bytes)}${inline ? "" : " · download"}</span></li>`;
     })
     .join("\n");
-  return `  <h2 class="block">Attachments</h2>\n  <ul class="atts">\n${rows}\n  </ul>`;
+  return `  <div class="section-title">Attachments</div>\n  <ul class="atts">\n${rows}\n  </ul>`;
 }
 
 function fieldsTable(env: RecordEnvelope, skip: string[] = []): string {
@@ -250,12 +311,32 @@ function renderValue(value: unknown): string {
   if (typeof value === "string") {
     const href = safeHref(value);
     if (href) return `<a href="${esc(href)}" rel="noreferrer">${esc(value)}</a>`;
+    const trimmed = value.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+          return renderKV(parsed);
+        }
+      } catch { /* not valid JSON, fall through */ }
+    }
     return esc(value);
   }
   if (typeof value === "number" || typeof value === "boolean") return esc(String(value));
   if (Array.isArray(value)) return esc(value.map((v) => String(v)).join(", "));
   if (value === null || value === undefined) return `<span class="muted">—</span>`;
+  if (typeof value === "object") return renderKV(value as Record<string, unknown>);
   return esc(JSON.stringify(value));
+}
+
+function renderKV(obj: Record<string, unknown>): string {
+  const entries = Object.entries(obj);
+  if (entries.length === 0) return `<span class="muted">—</span>`;
+  const rows = entries.map(([k, v]) => {
+    const display = typeof v === "number" ? v.toLocaleString() : String(v);
+    return `<tr><td class="kv-key">${esc(k)}</td><td class="kv-val">${esc(display)}</td></tr>`;
+  });
+  return `<table class="kv">${rows.join("")}</table>`;
 }
 
 function firstUrl(env: RecordEnvelope): string | null {
@@ -286,15 +367,21 @@ function cardTime(env: RecordEnvelope): string {
 }
 
 function badges(env: RecordEnvelope, extra: string[] = []): string {
-  const parts = [`<span class="badge schema">${esc(env.schema)}</span>`];
+  const parts = [`<span class="badge accent">${esc(env.schema)}</span>`];
   for (const b of extra) parts.push(`<span class="badge">${esc(b)}</span>`);
-  return `  <div class="badges">${parts.join("")}\n  </div>`;
+  return parts.join("");
+}
+
+function metaLine(env: RecordEnvelope, extra: string[] = []): string {
+  const chips = [badges(env, extra)];
+  if (typeof env.created_at === "string") chips.push(`<span class="muted">created ${esc(fmtDate(env.created_at))}</span>`);
+  return chips.join(" ");
 }
 
 export function recordPage(input: RecordPageInput): string {
   const { env, ns, segs, view, rawBase } = input;
   const crumbs: Crumb[] = [{ label: ns, href: `/n/${encodeURIComponent(ns)}` }];
-  segs.slice(0, -1).forEach((segment, i) => {
+  segs.forEach((segment, i) => {
     const href = `/n/${[ns, ...segs.slice(0, i + 1)].map(encodeURIComponent).join("/")}`;
     crumbs.push({ label: segment, href });
   });
@@ -307,39 +394,40 @@ export function recordPage(input: RecordPageInput): string {
   if (view === "card") {
     const link = firstUrl(env);
     const platform = typeof env.data?.["platform"] === "string" ? String(env.data["platform"]) : "";
+    const author = recordAuthor(env);
+    const initial = [...author.trim()][0] ?? "?";
     html = `  <article class="view-card">
-    <div class="head"><span class="author">${esc(recordAuthor(env))}</span><span class="muted">${esc(platform ? `${platform} · ` : "")}${esc(cardTime(env))}</span></div>
+    <div class="head">
+      <span class="avatar">${esc(initial)}</span>
+      <span class="who"><span class="author">${esc(author)}</span><span class="time">${esc(platform ? `${platform} · ` : "")}${esc(cardTime(env))}</span></span>
+    </div>
     <div class="prose">${esc(body || title)}</div>
     ${grid ? `    <div class="imgs">\n${grid}\n    </div>` : ""}
-    ${link ? `    <p><a class="btn" href="${esc(link)}" rel="noreferrer">查看原文 →</a></p>` : ""}
+    ${link ? `    <p><a class="btn" href="${esc(link)}" rel="noreferrer">查看原文 <span class="arrow">→</span></a></p>` : ""}
   </article>
 ${fieldsTable(env, ["content", "author", "platform", "url", "published_at"])}
 ${atts}`;
   } else if (view === "gallery") {
-    html = `  <h1>${esc(title)}</h1>
-${badges(env, [ns])}
+    html = `  <div class="page-head"><h1>${esc(title)}</h1><div class="sub">${metaLine(env, [ns])}</div></div>
 ${grid ? `  <div class="imgs gallery-first">\n${grid}\n  </div>` : `  <div class="empty"><p>No images.</p></div>`}
-  <h2 class="block">Metadata</h2>
+  <div class="section-title">Metadata</div>
 ${fieldsTable(env)}
 ${atts}`;
   } else if (view === "article") {
     html = `  <article class="view-article">
     <h1>${esc(title)}</h1>
-    <p class="byline">${esc(recordAuthor(env))} · ${esc(cardTime(env))}</p>
+    <p class="byline">${esc(recordAuthor(env))} · ${esc(cardTime(env))} · <span class="mono">${esc(env.schema)}</span></p>
     <div class="prose">${esc(body)}</div>
   </article>
 ${fieldsTable(env, ["title", "content", "author", "published_at"])}
 ${atts}`;
   } else {
-    html = `  <h1>${esc(title)}</h1>
-${badges(env, [`view ${view}`, ns])}
+    html = `  <div class="page-head"><h1>${esc(title)}</h1><div class="sub">${metaLine(env, [`view ${view}`, ns])}</div></div>
 ${fieldsTable(env, ["title", "name", "content"])}
-${body ? `  <section class="block"><div class="prose">${esc(body)}</div></section>` : ""}
+${body ? `  <div class="section-title">Body</div>\n  <div class="prose">${esc(body)}</div>` : ""}
 ${grid ? `  <div class="imgs">\n${grid}\n  </div>` : ""}
 ${atts}`;
   }
 
-  const crumbPath = `/n/${[ns, ...segs].map(encodeURIComponent).join("/")}`;
-  crumbs.push({ label: title, href: crumbPath });
-  return layout(`${title}`, crumbs, html.trimEnd());
+  return layout(title, crumbs, html.trimEnd());
 }
