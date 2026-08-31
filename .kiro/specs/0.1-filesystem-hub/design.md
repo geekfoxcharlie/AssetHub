@@ -1,7 +1,7 @@
 # AssetHub 0.1 filesystem hub design
 
 Spec version: 0.1  
-Status: Planned
+Status: Implemented
 
 ## 1. Design principles
 

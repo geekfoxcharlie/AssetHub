@@ -1,7 +1,7 @@
 # AssetHub 0.1 filesystem hub requirements
 
 Spec version: 0.1  
-Status: Planned
+Status: Implemented
 
 ## 1. Purpose
 

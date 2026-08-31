@@ -15,7 +15,8 @@
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-assets.mjs && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test dist/test/*.test.js",
-    "demo": "npm run build && node dist/cli.js demo --data-dir .demo"
+    "demo": "npm run build && node dist/cli.js demo --data-dir .demo",
+    "web": "node dist/cli.js web --data-dir .demo"
   },
   "dependencies": {
     "ajv": "^8.17.1",

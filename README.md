@@ -52,11 +52,42 @@ A record is one folder, named by its id, containing a `record.json` and the file
 | Schema | A JSON Schema defining what `data` may contain. Resolved per project first, then globally, then from the built-ins (`note`, `article`, `webpage`, `post`, `image`, `file`). |
 | Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. |
 
+## Quick start
+
+```console
+$ npm install && npm run demo     # build, then seed the reference scenario into .demo/
+$ npm run web                     # read-only viewer at http://127.0.0.1:4124
+```
+
+Browse `douyin-hub / zhangsan / posts` and open a video record: card layout, inline images, outbound link. Rerun `npm run demo` — records are replaced in place, never duplicated.
+
+## Commands
+
+```text
+assethub namespace add <id> [--name <n>] [--goal <g>]    register a project namespace
+assethub namespace list | namespace show <id>            read the tree
+assethub schema add <id> --file <f.json> [--namespace]   register a schema (compiles first)
+assethub schema list [--namespace] | schema show <id>    resolved source: project > global > preset
+assethub put <ns> <dir> --data @file.json [--data-inline k=v]
+           [--schema <id>] [--id <ulid>] [--file <path>]...   create or upsert a record
+assethub get <id>                                        read one record, wherever it has moved
+assethub query [text] [--namespace] [--schema] [--limit] substring search over values and ids
+assethub delete <ns> <id> [--file <name>]                remove a record or one attachment
+assethub idfor <key>                                     deterministic ULID for a natural key
+assethub validate [--namespace]                          integrity report over the tree
+assethub web [--port]                                    read-only viewer on loopback
+assethub demo                                            seed the douyin-hub scenario
+assethub context                                         agent briefing
+```
+
+Every command takes `--data-dir <dir>` (else `ASSETHUB_DATA_DIR`, then XDG) and `--json` for the `{schemaVersion, command, generatedAt, data, errors}` envelope.
+
 ## Status
 
-Design phase; implementation is specified in the [0.1 filesystem hub spec](.kiro/specs/0.1-filesystem-hub/requirements.md).
+0.1 is implemented and specified in the [0.1 filesystem hub spec](.kiro/specs/0.1-filesystem-hub/requirements.md); the build and tests pass with `npm test`.
 
 ## Documentation
 
 - [Product requirements](docs/REQUIREMENTS.md) — what the product is and is not.
+- [Architecture](docs/ARCHITECTURE.md) — how the implemented system works.
 - [0.1 spec](.kiro/specs/0.1-filesystem-hub/requirements.md) — requirements, design, and tasks for the current iteration.
