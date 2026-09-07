@@ -5,6 +5,15 @@ export interface Attachment {
   hash: string;
 }
 
+export interface ProvenanceEntry {
+  url: string;
+  fetched_at: string;
+  author?: string;
+  published_at?: string;
+  source_id?: string;
+  notes?: string;
+}
+
 export interface RecordEnvelope {
   schemaVersion: 1;
   id: string;
@@ -12,6 +21,8 @@ export interface RecordEnvelope {
   schema: string;
   data: Record<string, unknown>;
   files: Attachment[];
+  /** Optional for existing/local records. Each externally collected source has its own access time. */
+  provenance?: ProvenanceEntry[];
   created_at: string;
   updated_at: string;
 }

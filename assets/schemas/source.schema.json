@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:source",
+  "title": "Source",
+  "description": "A reusable information-source record. Access notes describe how an agent can use it; this record performs no collection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "url", "access", "status"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "url": { "type": "string", "format": "uri" },
+    "access": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["active", "paused", "retired"] },
+    "tags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "notes": { "type": "string" },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "items_seen": { "type": "integer", "minimum": 0 },
+    "items_used": { "type": "integer", "minimum": 0 },
+    "retired_at": { "type": "string", "format": "date-time" },
+    "retirement_reason": { "type": "string" }
+  }
+}

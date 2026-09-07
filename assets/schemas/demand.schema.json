@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "assethub:demand",
+  "title": "Demand",
+  "description": "A data need: scope, output and reviewable state. Cadence is descriptive and never schedules execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "topic", "output", "status"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "topic": { "type": "string", "minLength": 1 },
+    "output": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["active", "paused", "completed", "retired"] },
+    "cadence": { "type": "string", "minLength": 1 },
+    "workflow": { "type": "string", "minLength": 1 },
+    "source_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" } },
+    "tags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "notes": { "type": "string" }
+  }
+}

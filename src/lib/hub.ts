@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Finding, NamespaceInfo, RecordEnvelope } from "./types.js";
+import type { Finding, NamespaceInfo, ProvenanceEntry, RecordEnvelope } from "./types.js";
+import { provenanceProblems } from "./provenance.js";
 import {
   addSchema as addSchemaToRegistry,
   listSchemas,
@@ -48,6 +49,8 @@ export interface PutInput {
   data: Record<string, unknown>;
   /** When given, replaces the attachment list; when omitted, previous files are kept. */
   files?: AttachmentSource[] | undefined;
+  /** Omission preserves existing provenance; a supplied array replaces it; [] clears it. */
+  provenance?: ProvenanceEntry[] | undefined;
 }
 
 export interface PutResult {
@@ -73,6 +76,7 @@ export interface QueryHit {
   created_at: string;
   updated_at: string;
   data: Record<string, unknown>;
+  provenance?: ProvenanceEntry[];
 }
 
 export interface ValidateResult {
@@ -251,6 +255,12 @@ export class Hub {
       throw err("invalid_data", `data does not match schema '${schemaId}': ${problems.join("; ")}`);
     }
 
+    const provenance = input.provenance === undefined ? existing?.env.provenance : input.provenance;
+    if (provenance !== undefined) {
+      const issues = provenanceProblems(provenance);
+      if (issues.length) throw err("invalid_data", issues.join("; "));
+    }
+
     const now = new Date().toISOString();
     const fileBytes = new Map<string, Buffer>();
     let files: RecordEnvelope["files"];
@@ -300,6 +310,7 @@ export class Hub {
         };
 
     const targetDir = existing ? existing.dir : path.join(dirTarget, id);
+    if (provenance !== undefined) env.provenance = provenance;
     writeRecordAtomic(targetDir, env, fileBytes);
     return { created: !existing, record: env, path: this.rel(targetDir) };
   }
@@ -334,6 +345,7 @@ export class Hub {
         created_at: env.created_at,
         updated_at: env.updated_at,
         data: env.data,
+        ...(env.provenance !== undefined ? { provenance: env.provenance } : {}),
       });
     }
     hits.sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : b.id < a.id ? -1 : b.id > a.id ? 1 : 0));
@@ -458,10 +470,10 @@ export class Hub {
   }
 }
 
-/** Substring match over the id plus leaf values of data (never JSON keys). */
+/** Substring match over the id plus content/provenance values (never JSON keys). */
 function matchesText(env: RecordEnvelope, text: string): boolean {
   if (typeof env.id === "string" && env.id.includes(text)) return true;
-  return leafValues(env.data).some((v) => v.includes(text));
+  return leafValues([env.data, env.provenance]).some((v) => v.includes(text));
 }
 
 function leafValues(value: unknown, out: string[] = []): string[] {

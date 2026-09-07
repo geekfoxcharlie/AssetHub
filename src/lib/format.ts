@@ -5,6 +5,7 @@ import { err } from "./errors.js";
 import { RECORD_FILE } from "./walk.js";
 import type { Attachment, RecordEnvelope } from "./types.js";
 import { isUlid } from "./ulid.js";
+import { provenanceProblems } from "./provenance.js";
 
 export type AttachmentSource = string | { name: string; bytes: Buffer };
 
@@ -107,6 +108,7 @@ export function checkShape(env: RecordEnvelope, dirname: string): string[] {
   }
   if (typeof env.created_at !== "string") problems.push("created_at must be a string");
   if (typeof env.updated_at !== "string") problems.push("updated_at must be a string");
+  if (env.provenance !== undefined) problems.push(...provenanceProblems(env.provenance));
   return problems;
 }
 

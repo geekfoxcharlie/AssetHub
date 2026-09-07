@@ -2,6 +2,8 @@
 
 Status: describes the implemented 0.1 system ([spec](../.kiro/specs/0.1-filesystem-hub/requirements.md))
 
+Additive collection support: [COLLECTION.md](COLLECTION.md) specifies the optional envelope provenance and the source/demand presets.
+
 ## 1. Model
 
 A record is one folder: `record.json` plus its attachments. Identity is the ULID inside `record.json`, so folders can be moved or renamed without breaking `get`. Nothing is indexed: every read walks the tree, every write touches exactly one record folder. There is no database, cache, or resident process anywhere.
@@ -32,7 +34,7 @@ Walking rule: a folder that contains `record.json` is a record and is not descen
 | `src/lib/errors.ts` / `types.ts` | `AppError` codes; envelope, attachment, CLI-envelope types |
 | `src/lib/walk.ts` | sorted tree walker; record detection; namespace listing |
 | `src/lib/schema.ts` | registry resolution (project → global → preset), Ajv compile cache keyed by content hash |
-| `src/lib/format.ts` | envelope parse/serialize/shape check, atomic record writes, attachment ingestion, titles |
+| `src/lib/format.ts` / `provenance.ts` | envelope parse/serialize/shape check, common provenance validation, atomic record writes, attachment ingestion, titles |
 | `src/lib/hub.ts` | command orchestration: namespace/schema/put/get/query/delete/validate/idfor |
 | `src/lib/demo.ts` | douyin-hub scenario seeder; local PNG generator (no network) |
 | `src/lib/context.ts` | agent briefing |
@@ -48,7 +50,7 @@ For a write into namespace `ns` with schema id `s`, `src/lib/schema.ts` resolves
 
 1. `<root>/<ns>/.schemas/s.schema.json` — project (may shadow anything)
 2. `<root>/schemas/s.schema.json` — global
-3. `dist/assets/schemas/s.schema.json` — preset (`note`, `article`, `webpage`, `post`, `image`, `file`)
+3. `dist/assets/schemas/s.schema.json` — preset (`note`, `article`, `webpage`, `post`, `image`, `file`, `source`, `demand`)
 
 Validation uses Ajv (draft-07 + ajv-formats), compiled once per schema file and cached by content hash. The `x-assethub.view` keyword (`record | card | gallery | article`) selects the web rendering and is ignored by validation. `schema add` compiles the schema before registering; a duplicate id in the same registry is `already_exists`.
 
@@ -68,13 +70,15 @@ put <ns> <dir> [--id <ulid>] --schema <id> --data ... [--file ...]
 
 Create uses a fresh ULID and `created_at = updated_at = now`. Update keeps `id`, `namespace`, `schema`, `created_at`, refreshes `updated_at`; the schema is immutable on update. `--file` replaces the attachment list; omitting it keeps the previous files (bytes are re-read from the old folder into the temp dir).
 
+`--provenance` accepts an array or `@file.json`, validated separately from the content schema before writing. Omission preserves existing provenance, an array replaces it, and `[]` clears it. The field is optional in envelope version 1 for backwards compatibility.
+
 `delete <ns> <id>` removes the whole record folder; `delete <ns> <id> --file <name>` unlinks one registered attachment and rewrites `record.json` via temp file + rename.
 
 `idfor <key>` derives a ULID with the time part pinned to zero and the 80 random bits taken from the first 10 bytes of `sha256(key)` — collectors retry `put --id` without duplicating.
 
 ## 6. Read path
 
-`get <id>` and `query [text]` walk namespaces with `readdirSync` in sorted order. Query text is a literal substring matched against the id plus the leaf values of `data` (strings, numbers, booleans; arrays and objects flattened) — never against JSON keys. Ordering is `created_at DESC, id DESC`, then `--limit` (default 100).
+`get <id>` and `query [text]` walk namespaces with `readdirSync` in sorted order. Query text is a literal substring matched against the id plus the leaf values of `data` and `provenance` (strings, numbers, booleans; arrays and objects flattened) — never against JSON keys or attachment contents. Ordering is `created_at DESC, id DESC`, then `--limit` (default 100).
 
 ## 7. Integrity (`validate`)
 

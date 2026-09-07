@@ -11,10 +11,13 @@ const MODEL = [
   "Every write names a namespace (a first-level folder under the data root) and cannot write outside it; reads cross namespaces freely.",
   "Data is validated against a JSON Schema before anything touches the disk; schemas resolve project → global → preset.",
   "There is no database, index, or background service: the data directory is the whole system.",
+  "Use --provenance @sources.json for collected records, independently of the content schema: an array of {url, fetched_at, author?, published_at?, source_id?, notes?}. Omission preserves existing provenance; [] explicitly clears it. Local records and old data may omit it.",
+  "Built-in source and demand schemas store source dossiers and data needs. Keep shared source records in one chosen namespace (for example sources); project demands reference them by id. Neither schema collects, scores or schedules anything.",
+  "Use schema show before writing; custom project schemas are registered with schema add. Put the namespace in idfor's natural key to avoid cross-namespace id collisions. Inspect validate.findings; exit code 0 alone is not proof of a healthy tree.",
 ].join("\n");
 
 const COMMANDS: { name: string; purpose: string }[] = [
-  { name: "put <ns> <dir> --data @file.json [--schema <id>] [--id <ulid>] [--file <path>...]", purpose: "create or upsert a record" },
+  { name: "put <ns> <dir> --data @file.json [--schema <id>] [--id <ulid>] [--file <path>...] [--provenance @sources.json]", purpose: "create or upsert a record" },
   { name: "get <id>", purpose: "read one record, wherever it has moved" },
   { name: "query [text] [--namespace] [--schema] [--limit]", purpose: "substring search over field values and ids" },
   { name: "delete <ns> <id> [--file <name>]", purpose: "remove a record or one attachment" },

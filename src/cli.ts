@@ -6,7 +6,8 @@ import { resolveRoot } from "./lib/paths.js";
 import { seedDemo } from "./lib/demo.js";
 import { buildContext, renderContextHuman } from "./lib/context.js";
 import { startServer } from "./web/server.js";
-import type { CliEnvelope } from "./lib/types.js";
+import type { CliEnvelope, ProvenanceEntry } from "./lib/types.js";
+import { provenanceProblems } from "./lib/provenance.js";
 
 // ------------------------------------------------------------------ arg parsing
 
@@ -135,6 +136,19 @@ function buildData(opts: Map<string, string | true | string[]>): Record<string, 
 
 // ---------------------------------------------------------------- human output
 
+function buildProvenance(raw: string | undefined): ProvenanceEntry[] | undefined {
+  if (raw === undefined) return undefined;
+  let value: unknown;
+  try {
+    value = JSON.parse(raw.startsWith("@") ? readFileSync(raw.slice(1), "utf8") : raw);
+  } catch {
+    throw err("invalid_argument", "--provenance requires a JSON array or a readable @file.json");
+  }
+  const problems = provenanceProblems(value);
+  if (problems.length) throw err("invalid_data", problems.join("; "));
+  return value as ProvenanceEntry[];
+}
+
 function human(command: string, data: unknown): string {
   const lines: string[] = [];
   switch (command) {
@@ -246,7 +260,7 @@ Commands:
   schema list [--namespace <ns>]                  merged registries, winner marked
   schema show <id> [--namespace <ns>]             resolved schema and its source
   put <ns> <dir> --data @file.json|--data-inline k=v
-       [--schema <id>] [--id <ulid>] [--file <path>]...
+       [--schema <id>] [--id <ulid>] [--file <path>]... [--provenance @sources.json]
                                                  create or upsert a record
   get <id>                                        read one record anywhere
   query [text] [--namespace <ns>] [--schema <id>] [--limit <n>]
@@ -332,7 +346,7 @@ async function run(parsed: Parsed): Promise<CommandResult> {
     }
 
     case "put": {
-      checkAllowed(opts, new Set([...GLOBAL_OPTS, "data", "data-inline", "schema", "id", "file"]));
+      checkAllowed(opts, new Set([...GLOBAL_OPTS, "data", "data-inline", "schema", "id", "file", "provenance"]));
       const ns = requireArg(args, 0, "ns");
       const dir = requireArg(args, 1, "dir");
       noExtraArgs(args, 2, "put");
@@ -345,6 +359,7 @@ async function run(parsed: Parsed): Promise<CommandResult> {
           id: optString(opts, "id"),
           data: buildData(opts),
           files: files.length ? files : undefined,
+          provenance: buildProvenance(optString(opts, "provenance")),
         }),
       };
     }

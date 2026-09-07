@@ -429,5 +429,12 @@ ${grid ? `  <div class="imgs">\n${grid}\n  </div>` : ""}
 ${atts}`;
   }
 
+  if (env.provenance?.length) {
+    html += `\n  <div class="section-title">Sources</div>\n`;
+    for (const source of env.provenance) {
+      const rows = Object.entries(source).map(([key, value]) => `    <tr><th>${esc(key)}</th><td>${renderValue(value)}</td></tr>`);
+      html += `  <table class="fields">\n${rows.join("\n")}\n  </table>\n`;
+    }
+  }
   return layout(title, crumbs, html.trimEnd());
 }

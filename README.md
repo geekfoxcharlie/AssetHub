@@ -41,6 +41,7 @@ A record is one folder, named by its id, containing a `record.json` and the file
 
 - `data` is the content. It must validate against the schema named in `schema`.
 - `files` lists the attachments sitting next to `record.json`.
+- Optional `provenance` records original source URLs and access times independently of the content schema. It is visible in `get`, `query`, and the read-only viewer; existing records remain valid.
 - The id inside `record.json` is the record's identity, so folders can be moved or renamed without breaking anything.
 
 ## Concepts
@@ -49,7 +50,7 @@ A record is one folder, named by its id, containing a `record.json` and the file
 | --- | --- |
 | Record | One folder: `record.json` plus attachments. Any folder containing `record.json` is a record; all other folders are containers. |
 | Namespace | A first-level folder in the data root, one per project. Every write names its namespace and cannot write outside it. Reads cross projects by default. |
-| Schema | A JSON Schema defining what `data` may contain. Resolved per project first, then globally, then from the built-ins (`note`, `article`, `webpage`, `post`, `image`, `file`). |
+| Schema | A JSON Schema defining what `data` may contain. Resolved per project first, then globally, then from the built-ins (`note`, `article`, `webpage`, `post`, `image`, `file`, `source`, `demand`). |
 | Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. |
 
 ## Quick start
@@ -69,7 +70,8 @@ assethub namespace list | namespace show <id>            read the tree
 assethub schema add <id> --file <f.json> [--namespace]   register a schema (compiles first)
 assethub schema list [--namespace] | schema show <id>    resolved source: project > global > preset
 assethub put <ns> <dir> --data @file.json [--data-inline k=v]
-           [--schema <id>] [--id <ulid>] [--file <path>]...   create or upsert a record
+           [--schema <id>] [--id <ulid>] [--file <path>]...
+           [--provenance @sources.json]                     create or upsert a record
 assethub get <id>                                        read one record, wherever it has moved
 assethub query [text] [--namespace] [--schema] [--limit] substring search over values and ids
 assethub delete <ns> <id> [--file <name>]                remove a record or one attachment
@@ -84,7 +86,11 @@ Every command takes `--data-dir <dir>` (else `ASSETHUB_DATA_DIR`, then XDG) and 
 
 ## Status
 
-0.1 is implemented and specified in the [0.1 filesystem hub spec](.kiro/specs/0.1-filesystem-hub/requirements.md); the build and tests pass with `npm test`.
+0.1 is implemented and specified in the [0.1 filesystem hub spec](.kiro/specs/0.1-filesystem-hub/requirements.md). The additive collection-support update provides envelope provenance plus `source` and `demand` presets. Run `npm test` for the build and tests.
+
+## Collecting reusable data
+
+Use [collection support](docs/COLLECTION.md) for source dossiers, demand records and provenance. These are general infrastructure capabilities; no namespaces, sources, demands or business workflows are created automatically.
 
 ## Documentation
 
