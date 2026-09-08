@@ -14,6 +14,7 @@ const MODEL = [
   "Use --provenance @sources.json for collected records, independently of the content schema: an array of {url, fetched_at, author?, published_at?, source_id?, notes?}. Omission preserves existing provenance; [] explicitly clears it. Local records and old data may omit it.",
   "Built-in source and demand schemas store source dossiers and data needs. Keep shared source records in one chosen namespace (for example sources); project demands reference them by id. Neither schema collects, scores or schedules anything.",
   "Use schema show before writing; custom project schemas are registered with schema add. Put the namespace in idfor's natural key to avoid cross-namespace id collisions. Inspect validate.findings; exit code 0 alone is not proof of a healthy tree.",
+  "Keep source dossiers in the same project namespace as the records that cite them, unless you deliberately share a sources space. Inspect the live install with: assethub status --json.",
 ].join("\n");
 
 const COMMANDS: { name: string; purpose: string }[] = [
@@ -28,6 +29,7 @@ const COMMANDS: { name: string; purpose: string }[] = [
   { name: "web [--port]", purpose: "read-only viewer on loopback (default 4124)" },
   { name: "demo", purpose: "seed the reference douyin-hub scenario" },
   { name: "context", purpose: "this briefing" },
+  { name: "status", purpose: "resolved data directory, namespaces and record counts" },
 ];
 
 export function buildContext(root: string): ContextData {

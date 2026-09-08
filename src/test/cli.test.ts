@@ -206,6 +206,25 @@ test("validate via CLI reports findings as JSON", () => {
   assert.ok(r.envelope.data?.findings.some((f) => f.code === "hash_mismatch"));
 });
 
+test("status reports the resolved data directory and namespace counts", () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const json = runCliJson<{ root: string; source: string; records: number; namespaces: { id: string; records: number }[] }>([
+    "status",
+    "--data-dir",
+    root,
+    "--json",
+  ]);
+  assert.equal(json.status, 0);
+  assert.equal(json.envelope.data?.source, "flag");
+  assert.equal(json.envelope.data?.root, root);
+  assert.ok((json.envelope.data?.records ?? 0) >= 1);
+  assert.ok(json.envelope.data?.namespaces.some((n) => n.id === "douyin-hub"));
+  const human = runCli(["status", "--data-dir", root]);
+  assert.ok(human.stdout.includes(root));
+  assert.ok(human.stdout.includes("douyin-hub"));
+});
+
 test("context prints the storage-model briefing", () => {
   const root = tmpRoot();
   seedDemo(root);

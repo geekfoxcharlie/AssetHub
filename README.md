@@ -82,7 +82,7 @@ assethub demo                                            seed the douyin-hub sce
 assethub context                                         agent briefing
 ```
 
-Every command takes `--data-dir <dir>` (else `ASSETHUB_DATA_DIR`, then XDG) and `--json` for the `{schemaVersion, command, generatedAt, data, errors}` envelope.
+Every command takes `--data-dir <dir>` (else `ASSETHUB_DATA_DIR`, then XDG) and `--json` for the `{schemaVersion, command, generatedAt, data, errors}` envelope. `assethub status` prints the resolved data directory and namespace counts.
 
 ## Status
 

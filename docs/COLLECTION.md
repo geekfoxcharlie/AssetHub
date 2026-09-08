@@ -28,7 +28,7 @@ When updating, omitting `--provenance` preserves previous sources; a supplied ar
 
 Use the built-in `source` schema. Required: `name`, `url`, `access` (how an agent can access it), `status` (`active`, `paused`, `retired`). Optional: `tags`, `notes`, `reviewed_at`, `items_seen`, `items_used`, `retired_at`, `retirement_reason`.
 
-Keep source dossiers in one shared namespace chosen by the user, for example `sources`. Consumers read across namespaces and reference the source id; they do not copy their own lists. This is a convention, not an automatically created namespace or a global uniqueness constraint. Agents maintain review notes/counts when asked; the storage system does not score, subscribe or retire sources itself.
+Keep source dossiers in the same project namespace as the records that cite them. A separate shared `sources` space is optional when several consumers truly share one list; it is not created automatically. Consumers reference source ids rather than copying lists. Agents maintain review notes/counts when asked; the storage system does not score, subscribe or retire sources itself.
 
 ## Demand records
 

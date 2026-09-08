@@ -8,14 +8,19 @@ export const NS_PATTERN = /^[a-z][a-z0-9-]*$/;
 export const SCHEMA_ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
 export const RESERVED_IDS = new Set(["schemas"]);
 
+export type RootSource = "flag" | "env" | "xdg";
+
+export function resolveRootInfo(explicit?: string): { root: string; source: RootSource } {
+  if (explicit) return { root: path.resolve(explicit), source: "flag" };
+  if (process.env.ASSETHUB_DATA_DIR) return { root: path.resolve(process.env.ASSETHUB_DATA_DIR), source: "env" };
+  const dir = process.env.XDG_DATA_HOME
+    ? path.join(process.env.XDG_DATA_HOME, "assethub")
+    : path.join(homedir(), ".local", "share", "assethub");
+  return { root: path.resolve(dir), source: "xdg" };
+}
+
 export function resolveRoot(explicit?: string): string {
-  const dir =
-    explicit ??
-    process.env.ASSETHUB_DATA_DIR ??
-    (process.env.XDG_DATA_HOME
-      ? path.join(process.env.XDG_DATA_HOME, "assethub")
-      : path.join(homedir(), ".local", "share", "assethub"));
-  return path.resolve(dir);
+  return resolveRootInfo(explicit).root;
 }
 
 export function nsDir(root: string, ns: string): string {

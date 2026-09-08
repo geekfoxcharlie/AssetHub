@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { Hub } from "./lib/hub.js";
 import { AppError, err } from "./lib/errors.js";
-import { resolveRoot } from "./lib/paths.js";
+import { resolveRootInfo } from "./lib/paths.js";
 import { seedDemo } from "./lib/demo.js";
 import { buildContext, renderContextHuman } from "./lib/context.js";
 import { startServer } from "./web/server.js";
@@ -239,6 +239,22 @@ function human(command: string, data: unknown): string {
       lines.push(renderContextHuman(data as ReturnType<typeof buildContext>));
       break;
     }
+    case "status": {
+      const d = data as {
+        root: string;
+        source: string;
+        webPort: number;
+        records: number;
+        namespaces: { id: string; name: string; records: number }[];
+      };
+      lines.push(`root        ${d.root}`);
+      lines.push(`source      ${d.source}`);
+      lines.push(`web         http://127.0.0.1:${d.webPort}`);
+      lines.push(`records     ${d.records}`);
+      if (!d.namespaces.length) lines.push("namespaces  (none)");
+      for (const n of d.namespaces) lines.push(`  ${n.id.padEnd(18)}${String(n.records).padStart(4)}  ${n.name}`);
+      break;
+    }
     default:
       lines.push(JSON.stringify(data, null, 2));
   }
@@ -271,6 +287,7 @@ Commands:
   web [--port <n>]                                read-only viewer (loopback)
   demo                                            seed the reference scenario
   context                                         agent briefing
+  status                                          resolved data dir, namespaces and counts
 
 Data root: --data-dir > ASSETHUB_DATA_DIR > $XDG_DATA_HOME/assethub > ~/.local/share/assethub
 `;
@@ -289,7 +306,8 @@ async function run(parsed: Parsed): Promise<CommandResult> {
   const dataDir = optString(opts, "data-dir");
   const command = parsed.positionals[0] ?? "help";
   const args = parsed.positionals.slice(1);
-  const root = resolveRoot(dataDir);
+  const resolved = resolveRootInfo(dataDir);
+  const root = resolved.root;
   const hub = new Hub(root);
 
   switch (command) {
@@ -422,6 +440,25 @@ async function run(parsed: Parsed): Promise<CommandResult> {
       checkAllowed(opts, new Set(GLOBAL_OPTS));
       noExtraArgs(args, 0, "context");
       return { data: buildContext(root) };
+    }
+
+    case "status": {
+      checkAllowed(opts, new Set(GLOBAL_OPTS));
+      noExtraArgs(args, 0, "status");
+      const namespaces = hub.listNamespaces().map((n) => ({ id: n.id, name: n.name, records: n.records }));
+      return {
+        data: {
+          root,
+          source: resolved.source,
+          env: {
+            ASSETHUB_DATA_DIR: process.env.ASSETHUB_DATA_DIR ?? null,
+            XDG_DATA_HOME: process.env.XDG_DATA_HOME ?? null,
+          },
+          webPort: 4124,
+          namespaces,
+          records: namespaces.reduce((sum, n) => sum + n.records, 0),
+        },
+      };
     }
 
     case "web": {
