@@ -21,5 +21,6 @@
       "content": "Query text is matched as a substring. Wildcards in the query are not glob syntax.",
       "tags": ["search"]
     }
-  ]
+  ],
+  "x-assethub": { "view": "article" }
 }

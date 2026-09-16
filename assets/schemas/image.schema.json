@@ -22,5 +22,6 @@
       "alt": "Line drawing of a small catalog hall with labeled drawers",
       "tags": ["diagram"]
     }
-  ]
+  ],
+  "x-assethub": { "view": "gallery" }
 }

@@ -264,3 +264,184 @@ test("web: url fields link only http/https/mailto", async () => {
     assert.ok(html.includes('href="https://example.com/a"'));
   });
 });
+
+test("web: list titles use key/display_name and skip ULIDs", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  hub.addSchema(
+    "search_signal",
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["key", "engine"],
+      properties: { key: { type: "string" }, engine: { type: "string" }, impressions: { type: "number" }, cluster: { type: "string" } },
+    },
+    "douyin-hub",
+  );
+  hub.addSchema(
+    "topic_facets",
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["display_name", "facets"],
+      properties: {
+        display_name: { type: "string" },
+        method: { type: "string" },
+        facets: { type: "array" },
+      },
+    },
+    "douyin-hub",
+  );
+  const signalIds = ["web:sig:1", "web:sig:2", "web:sig:3", "web:sig:4"].map((k) => hub.idfor(k));
+  signalIds.forEach((id, i) => {
+    hub.put({
+      ns: "douyin-hub",
+      dir: "signals",
+      schemaId: "search_signal",
+      id,
+      data: { key: `query ${i}`, engine: "google", impressions: 10 * (i + 1), cluster: "other" },
+    });
+  });
+  const facetId = hub.idfor("web:facet:1");
+  hub.put({
+    ns: "douyin-hub",
+    dir: "facets",
+    schemaId: "topic_facets",
+    id: facetId,
+    data: {
+      display_name: "Construction",
+      method: "research",
+      facets: [
+        { label: "Estimating", keywords: ["cost", "bid"], note: "Price the job" },
+        { label: "Safety", keywords: ["ppe"] },
+      ],
+    },
+  });
+  await withServer(root, async (base) => {
+    const signals = await (await fetch(base + "/n/douyin-hub/signals")).text();
+    assert.ok(signals.includes("query 0"), "signal key is the list title");
+    assert.ok(signals.includes("<table class=\"records\">"), "homogeneous short fields render as a table");
+    assert.equal((signals.match(/query \d/g) ?? []).length >= 4, true);
+    const facet = await (await fetch(base + `/n/douyin-hub/facets/${facetId}`)).text();
+    assert.ok(facet.includes("<h1>Construction</h1>"));
+    assert.ok(facet.includes("Estimating"));
+    assert.ok(facet.includes("obj-card"));
+    assert.ok(!facet.includes("[object Object]"));
+  });
+});
+
+test("web: search, id redirect, markdown note, inline text attachment", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  const noteId = hub.idfor("web:note:map");
+  hub.put({
+    ns: "douyin-hub",
+    dir: "notes",
+    schemaId: "note",
+    id: noteId,
+    data: {
+      title: "学习地图",
+      content: "# 地图\n\n- `core/docs` ReAct — `01J8AAAA9TQZ8VZEWCSRGQKP2M`\n\n```bash\nassethub query topic\n```\n",
+      tags: ["index"],
+    },
+    files: [{ name: "snapshot.md", bytes: Buffer.from("# Snapshot\n\nCaptured page.") }],
+  });
+  await withServer(root, async (base) => {
+    const search = await (await fetch(base + "/q?q=zhangsan")).text();
+    assert.ok(search.includes("zhangsan"));
+    assert.ok(search.includes("/n/douyin-hub"));
+
+    const redirect = await fetch(base + `/r/${noteId}`, { redirect: "manual" });
+    assert.equal(redirect.status, 302);
+    assert.equal(redirect.headers.get("location"), `/n/douyin-hub/notes/${noteId}`);
+
+    const note = await (await fetch(base + `/n/douyin-hub/notes/${noteId}`)).text();
+    assert.ok(note.includes("view-article"), "preset note uses article view");
+    assert.ok(note.includes("<h1>地图</h1>") || note.includes("<h1>学习地图</h1>"));
+    assert.ok(note.includes("<pre"), "fenced code is rendered");
+    assert.ok(note.includes("Snapshot"), "markdown attachment is inlined");
+    assert.ok(!note.includes("<script"));
+  });
+});
+
+test("web: catalog card for entities without platform", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  hub.addSchema(
+    "github_repo",
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["full_name", "html_url", "summary"],
+      properties: {
+        full_name: { type: "string" },
+        html_url: { type: "string" },
+        summary: { type: "string" },
+        name: { type: "string" },
+        stars: { type: "integer" },
+      },
+      "x-assethub": { view: "card" },
+    },
+    "douyin-hub",
+  );
+  const id = hub.idfor("web:repo:1");
+  hub.put({
+    ns: "douyin-hub",
+    dir: "github",
+    schemaId: "github_repo",
+    id,
+    data: {
+      full_name: "MemPalace/mempalace",
+      html_url: "https://github.com/MemPalace/mempalace",
+      summary: "Open-source AI memory.",
+      name: "mempalace",
+      stars: 58955,
+    },
+  });
+  await withServer(root, async (base) => {
+    const html = await (await fetch(base + `/n/douyin-hub/github/${id}`)).text();
+    assert.ok(html.includes("catalog"), "non-post card uses catalog layout");
+    assert.ok(!html.includes("class=\"avatar\""), "no social avatar");
+    assert.ok(html.includes("58,955") || html.includes("58955"));
+    assert.ok(html.includes("查看原文"));
+    assert.ok(html.includes("https://github.com/MemPalace/mempalace"));
+    const list = await (await fetch(base + "/n/douyin-hub/github")).text();
+    assert.ok(list.includes("MemPalace/mempalace"));
+    assert.ok(list.includes("Open-source AI memory."));
+  });
+});
+
+test("web: pagination slices long folders", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  hub.addSchema(
+    "search_signal",
+    {
+      type: "object",
+      additionalProperties: false,
+      properties: { key: { type: "string" }, engine: { type: "string" }, kind: { type: "string" } },
+    },
+    "douyin-hub",
+  );
+  for (let i = 0; i < 101; i++) {
+    hub.put({
+      ns: "douyin-hub",
+      dir: "signals",
+      schemaId: "search_signal",
+      id: hub.idfor(`web:page:${i}`),
+      data: { key: `term-${i}`, engine: "bing", kind: "query" },
+    });
+  }
+  await withServer(root, async (base) => {
+    const page1 = await (await fetch(base + "/n/douyin-hub/signals")).text();
+    assert.ok(page1.includes("next →"));
+    assert.ok(page1.includes("1–100 of 101"));
+    const page2 = await (await fetch(base + "/n/douyin-hub/signals?page=2")).text();
+    assert.ok(page2.includes("101–101 of 101") || page2.includes("101 of 101"));
+    assert.ok(page2.includes("previous"));
+  });
+});

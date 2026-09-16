@@ -29,5 +29,6 @@
       "content": "Keep the record on disk. Treat the database as a catalog, not the source of truth.",
       "tags": ["local-first", "sqlite"]
     }
-  ]
+  ],
+  "x-assethub": { "view": "article" }
 }

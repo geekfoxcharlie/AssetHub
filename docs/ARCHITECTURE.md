@@ -52,7 +52,7 @@ For a write into namespace `ns` with schema id `s`, `src/lib/schema.ts` resolves
 2. `<root>/schemas/s.schema.json` — global
 3. `dist/assets/schemas/s.schema.json` — preset (`note`, `article`, `webpage`, `post`, `image`, `file`, `source`, `demand`)
 
-Validation uses Ajv (draft-07 + ajv-formats), compiled once per schema file and cached by content hash. The `x-assethub.view` keyword (`record | card | gallery | article`) selects the web rendering and is ignored by validation. `schema add` compiles the schema before registering; a duplicate id in the same registry is `already_exists`.
+Validation uses Ajv (draft-07 + ajv-formats), compiled once per schema file and cached by content hash. The `x-assethub.view` keyword (`record | card | gallery | article`) selects the web rendering and is ignored by validation. Presets set `note`/`article`/`webpage` → article, `post` → card, `image` → gallery; a missing or unknown declaration falls back to `record`. `schema add` compiles the schema before registering; a duplicate id in the same registry is `already_exists`.
 
 ## 5. Write path (`put`)
 
@@ -101,11 +101,15 @@ Walks every record (or one namespace) and reports findings without writing:
 | Path | Renders |
 | --- | --- |
 | `/` | namespace cards with record counts |
-| `/n/<ns>/<subpath...>` | folder browser (breadcrumb, subfolder counts, record entries) |
-| `/n/<ns>/<path>/<folder>` | record page, view chosen by the schema's `x-assethub.view` |
+| `/n/<ns>/<subpath...>` | folder browser (breadcrumb, subfolder schema mix, record entries). `?page=` paginates 100 at a time; `?schema=` filters when a folder mixes schemas. Homogeneous short-field folders render as a table. |
+| `/n/<ns>/<path>/<folder>` | record page, view chosen by the schema's `x-assethub.view`. `card` without `platform` uses a catalog layout. Long text is pulled out of the field table; object arrays become cards; `.md`/`.txt` attachments are inlined. |
+| `/q?q=&namespace=&schema=` | substring search via `Hub.query` (same matching as the CLI, default limit 100) |
+| `/r/<ulid>` | 302 to the record's folder URL, so `source_id` values can be links |
 | `/raw/<ns>/<path>/<folder>/<file>` | attachment bytes — inline for images, `attachment` otherwise |
 
-Safety: every path segment is decoded then validated (non-empty, no dotfiles — which also excludes `..`), the resolved path must stay under the root, only files registered in `files[]` are served, all user data is HTML-escaped, URL fields link only `http`/`https`/`mailto`, and responses carry `Content-Security-Policy`, `nosniff`, and `no-store` headers. The pages contain zero client-side JavaScript and no external assets.
+Titles come from `title` → `display_name` → `full_name` → `name` → `key` → a body snippet, never the ULID when an identity field exists. List subtitles use excerpt/summary/url/status/tags. Record lists sort by `created_at` descending.
+
+Safety: every path segment is decoded then validated (non-empty, no dotfiles — which also excludes `..`), the resolved path must stay under the root, only files registered in `files[]` are served, all user data is HTML-escaped, URL fields link only `http`/`https`/`mailto`, Markdown is a strict escaped subset (no raw HTML), and responses carry `Content-Security-Policy`, `nosniff`, and `no-store` headers. The pages contain zero client-side JavaScript and no external assets.
 
 ## 9. Error codes
 

@@ -193,19 +193,49 @@ export function listDiskFiles(dir: string): string[] {
     .sort();
 }
 
-const BODY_KEYS = ["content", "text", "body", "bio", "excerpt", "description"];
+/** Identity fields, preferred order for list/record headings. */
+export const TITLE_KEYS = ["title", "display_name", "full_name", "name", "key"] as const;
 
-/** Display title: title → name → first sentence of a body field → id. */
+/** Long-text fields the viewer promotes out of the metadata table. */
+export const BODY_KEYS = [
+  "content",
+  "text",
+  "body",
+  "bio",
+  "excerpt",
+  "description",
+  "summary",
+  "notes",
+  "why_it_matters",
+  "beginner_note",
+  "caption",
+] as const;
+
+/** Outbound URL fields, preferred order for the "open original" button. */
+export const URL_KEYS = ["url", "html_url", "github_url", "skill_md_url", "link", "source"] as const;
+
+function firstNonemptyString(data: Record<string, unknown>, keys: readonly string[]): string {
+  for (const key of keys) {
+    const v = data[key];
+    if (typeof v === "string" && v.trim().length > 0) return v.trim();
+  }
+  return "";
+}
+
+function clip(value: string, max: number): string {
+  const one = value.replace(/\s+/g, " ").trim();
+  return one.length > max ? one.slice(0, max) + "…" : one;
+}
+
+/** Display title: identity fields → first sentence of a body field → id. */
 export function recordTitle(env: RecordEnvelope): string {
   const data = env.data ?? {};
-  for (const key of ["title", "name"]) {
-    const v = data[key];
-    if (typeof v === "string" && v.trim().length > 0) return v;
-  }
+  const titled = firstNonemptyString(data, TITLE_KEYS);
+  if (titled) return titled;
   for (const key of BODY_KEYS) {
     const v = data[key];
     if (typeof v === "string" && v.trim().length > 0) {
-      return v.length > 48 ? v.slice(0, 48) + "…" : v;
+      return clip(v, 48);
     }
   }
   return env.id;
@@ -214,9 +244,46 @@ export function recordTitle(env: RecordEnvelope): string {
 /** First long-text field, for body rendering in the viewer. */
 export function recordBody(env: RecordEnvelope): string {
   const data = env.data ?? {};
-  for (const key of BODY_KEYS) {
+  return firstNonemptyString(data, BODY_KEYS);
+}
+
+/** First outbound URL string in data; caller still has to run it through safeHref. */
+export function recordUrl(env: RecordEnvelope): string {
+  return firstNonemptyString(env.data ?? {}, URL_KEYS);
+}
+
+/**
+ * One-line list subtitle: excerpt/summary, else URL, else status · tags.
+ * Never repeats the title and never falls back to the ULID.
+ */
+export function recordSubtitle(env: RecordEnvelope): string {
+  const data = env.data ?? {};
+  const title = recordTitle(env);
+  for (const key of ["excerpt", "summary", "description", "notes", "content", "beginner_note"] as const) {
     const v = data[key];
-    if (typeof v === "string" && v.length > 0) return v;
+    if (typeof v === "string" && v.trim().length > 0 && v.trim() !== title) {
+      return clip(v, 96);
+    }
   }
-  return "";
+  const url = recordUrl(env);
+  if (url && url !== title) return clip(url, 96);
+  const bits: string[] = [];
+  if (typeof data.status === "string" && data.status.trim()) bits.push(data.status.trim());
+  if (Array.isArray(data.tags)) {
+    for (const tag of data.tags) {
+      if (typeof tag === "string" && tag.trim()) bits.push(tag.trim());
+      if (bits.length >= 5) break;
+    }
+  }
+  return bits.join(" · ");
+}
+
+/** True when a string looks like Markdown worth running through the subset renderer. */
+export function looksLikeMarkdown(value: string): boolean {
+  if (value.includes("```")) return true;
+  if (/^#{1,3}\s+\S/m.test(value)) return true;
+  if (/^[-*]\s+\S/m.test(value)) return true;
+  if (/^\d+\.\s+\S/m.test(value)) return true;
+  if (/\[[^\]]+\]\([^)]+\)/.test(value)) return true;
+  return false;
 }

@@ -87,7 +87,7 @@ test("the read-only viewer shows provenance and escapes source annotations", () 
   for (const view of ["record", "card", "gallery", "article"] as const) {
     const html = recordPage({ env: record.record, ns: "consumer", segs: [record.record.id], view, rawBase: "/raw/consumer" });
     assert.ok(html.includes('href="https://example.org/original"'));
-    assert.ok(html.includes("2026-09-07T01:00:00Z"));
+    assert.ok(html.includes("2026-09-07"));
     assert.ok(html.includes("&lt;script&gt;"));
     assert.ok(!html.includes("<script>alert"));
   }

@@ -7,8 +7,11 @@ import {
   ingestAttachment,
   mimeByExt,
   readEnvelope,
+  looksLikeMarkdown,
   recordBody,
+  recordSubtitle,
   recordTitle,
+  recordUrl,
   serializeEnvelope,
   tryReadEnvelope,
   writeRecordAtomic,
@@ -138,8 +141,18 @@ test("mimeByExt covers common types and falls back to octet-stream", () => {
 test("recordTitle and recordBody pick sensible display fields", () => {
   assert.equal(recordTitle(makeEnv()), "Indexing local files");
   assert.equal(recordTitle(makeEnv({ data: { name: "张三" } })), "张三");
+  assert.equal(recordTitle(makeEnv({ data: { display_name: "Construction" } })), "Construction");
+  assert.equal(recordTitle(makeEnv({ data: { full_name: "MemPalace/mempalace" } })), "MemPalace/mempalace");
+  assert.equal(recordTitle(makeEnv({ data: { key: "ai agent" } })), "ai agent");
   assert.equal(recordTitle(makeEnv({ data: { content: "清晨的市场,摊主们支起摊位,雾气里全是烟火气。" } })).length <= 49, true);
   assert.equal(recordTitle(makeEnv({ data: {} })), "01J8AAAA9TQZ8VZEWCSRGQKP2M");
   assert.equal(recordBody(makeEnv({ data: { content: "body text" } })), "body text");
+  assert.equal(recordBody(makeEnv({ data: { summary: "A notable skill" } })), "A notable skill");
+  assert.equal(recordBody(makeEnv({ data: { notes: "review later" } })), "review later");
   assert.equal(recordBody(makeEnv()), "");
+  assert.equal(recordUrl(makeEnv({ data: { html_url: "https://github.com/a/b" } })), "https://github.com/a/b");
+  assert.equal(recordSubtitle(makeEnv({ data: { title: "T", summary: "A one-line pitch for the list." } })), "A one-line pitch for the list.");
+  assert.equal(recordSubtitle(makeEnv({ data: { key: "ai agent" } })), "");
+  assert.ok(looksLikeMarkdown("# Heading\n\n- item"));
+  assert.equal(looksLikeMarkdown("plain sentence"), false);
 });
