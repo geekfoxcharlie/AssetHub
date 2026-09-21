@@ -111,6 +111,23 @@ a.row:hover .title{color:var(--accent)}
 .row .desc{display:block;color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .meta{flex-shrink:0;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 
+details.ns{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);margin:0 0 10px}
+details.ns>summary{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;list-style:none}
+details.ns>summary::-webkit-details-marker{display:none}
+details.ns>summary .grow{flex:1;min-width:0}
+details.ns>summary .title{display:block;font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.ns>summary .desc{display:block;color:var(--mut);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.ns>summary .meta{flex-shrink:0;color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+details.ns>summary::after{content:"▸";flex-shrink:0;color:var(--faint);font-size:12px}
+details.ns[open]>summary::after{content:"▾"}
+details.ns>summary:hover .title{color:var(--accent)}
+details.ns[open]>summary{border-bottom:1px solid var(--line)}
+.ns-body{padding:14px 16px 16px}
+.ns-body .list{border-top:0}
+.ns-body .chips{margin-bottom:12px}
+.ns-note{margin:10px 0 0;font-size:13px}
+.ns-open{margin-top:14px}
+
 .badge{display:inline-block;font-family:var(--mono);font-size:11px;line-height:1;padding:4px 7px;border:1px solid var(--line-strong);border-radius:var(--radius);color:var(--mut);background:var(--surface)}
 .badge.accent{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -268,24 +285,69 @@ export function errorPage(status: number, message: string): string {
 
 // ------------------------------------------------------------------ home page
 
+export interface NamespaceFolder {
+  name: string;
+  href: string;
+  records: number;
+  schemaHint: string;
+}
+
 export interface NamespaceCard {
   id: string;
   name: string;
   goal: string;
   records: number;
+  schemas: { id: string; count: number }[];
+  folders: NamespaceFolder[];
+  topRecords: number;
+}
+
+function namespaceBody(n: NamespaceCard): string {
+  const parts: string[] = [];
+  if (n.schemas.length) {
+    parts.push(
+      `      <div class="chips">${n.schemas
+        .map((s) => `<span class="chip plain">${esc(s.id)} ${fmtNumber(s.count)}</span>`)
+        .join("")}</div>`,
+    );
+  }
+  if (n.folders.length) {
+    const rows = n.folders
+      .map(
+        (f) => `        <a class="row" href="${esc(f.href)}">
+          <span class="grow"><span class="title">${esc(f.name)}</span>${f.schemaHint ? `<span class="desc">${esc(f.schemaHint)}</span>` : ""}</span>
+          <span class="meta">${f.records} records</span>
+        </a>`,
+      )
+      .join("\n");
+    parts.push(`      <div class="list">\n${rows}\n      </div>`);
+  }
+  if (n.topRecords) {
+    parts.push(`      <p class="muted ns-note">${n.topRecords} records 直接放在该空间下。</p>`);
+  }
+  if (!n.records) {
+    parts.push(`      <p class="muted ns-note">空空间。</p>`);
+  }
+  return parts.join("\n");
 }
 
 export function namespacePage(items: NamespaceCard[]): string {
   const rows = items
     .map(
-      (n) => `    <a class="row" href="/n/${encodeURIComponent(n.id)}">
-      <span class="grow"><span class="title">${esc(n.name)}</span><span class="desc">${esc(n.id)}${n.goal ? ` · ${esc(n.goal)}` : ""}</span></span>
-      <span class="meta">${n.records} records</span>
-    </a>`,
+      (n) => `    <details class="ns">
+      <summary>
+        <span class="grow"><span class="title">${esc(n.name)}</span><span class="desc">${esc(n.id)}${n.goal ? ` · ${esc(n.goal)}` : ""}</span></span>
+        <span class="meta">${n.records} records</span>
+      </summary>
+      <div class="ns-body">
+${namespaceBody(n)}
+        <a class="btn ns-open" href="/n/${encodeURIComponent(n.id)}">打开项目空间 <span class="arrow">→</span></a>
+      </div>
+    </details>`,
     )
     .join("\n");
   const body = items.length
-    ? `  <div class="page-head"><h1>项目空间</h1><div class="sub">数据根下的第一层文件夹，一个项目一份。</div></div>\n  <div class="list">\n${rows}\n  </div>`
+    ? `  <div class="page-head"><h1>项目空间</h1><div class="sub">数据根下的第一层文件夹，一个项目一份。点击展开看栏目与 schema。</div></div>\n  <div class="nss">\n${rows}\n  </div>`
     : `  <div class="empty"><h1>还没有项目空间</h1><p>用 <code>assethub namespace add &lt;id&gt;</code> 创建，或运行 <code>assethub demo</code>。</p></div>`;
   return layout("项目空间", [], body);
 }

@@ -117,6 +117,45 @@ function summarizeFolder(dir: string, ns: string): { records: number; hint: stri
   return { records, hint, schemas };
 }
 
+function summarizeNamespace(dir: string, ns: string): Omit<NamespaceCard, "id" | "name" | "goal"> {
+  const schemaTally = new Map<string, number>();
+  const folderTally = new Map<string, { count: number; schemas: Map<string, number> }>();
+  let topRecords = 0;
+  for (const found of walkRecordsUnder(dir, ns)) {
+    const parsed = tryReadEnvelope(found.dir);
+    const schema = parsed.ok && parsed.env && typeof parsed.env.schema === "string" ? parsed.env.schema : "?";
+    schemaTally.set(schema, (schemaTally.get(schema) ?? 0) + 1);
+    const slash = found.rel.indexOf("/");
+    if (slash === -1) {
+      topRecords++;
+      continue;
+    }
+    const top = found.rel.slice(0, slash);
+    let entry = folderTally.get(top);
+    if (!entry) {
+      entry = { count: 0, schemas: new Map() };
+      folderTally.set(top, entry);
+    }
+    entry.count++;
+    entry.schemas.set(schema, (entry.schemas.get(schema) ?? 0) + 1);
+  }
+  const schemas = [...schemaTally.entries()]
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+    .map(([id, count]) => ({ id, count }));
+  const folders = [...folderTally.entries()]
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([name, tally]) => ({
+      name,
+      href: hrefFor(ns, [name]),
+      records: tally.count,
+      schemaHint: [...tally.schemas.entries()]
+        .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+        .map(([id, count]) => `${id} × ${count}`)
+        .join(" · "),
+    }));
+  return { records: schemas.reduce((n, s) => n + s.count, 0), schemas, folders, topRecords };
+}
+
 function namespaceCards(root: string): NamespaceCard[] {
   if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true })
@@ -124,7 +163,8 @@ function namespaceCards(root: string): NamespaceCard[] {
     .sort((a, b) => (a.name < b.name ? -1 : 1))
     .map((e) => {
       const meta = readNsMeta(root, e.name);
-      return { id: e.name, name: meta.name, goal: meta.goal, records: summarizeFolder(path.join(root, e.name), e.name).records };
+      const summary = summarizeNamespace(path.join(root, e.name), e.name);
+      return { id: e.name, name: meta.name, goal: meta.goal, ...summary };
     });
 }
 
