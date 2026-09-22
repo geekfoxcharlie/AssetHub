@@ -133,6 +133,12 @@ details.ns[open]>summary{border-bottom:1px solid var(--line)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{display:inline-block;font-size:12px;line-height:1.2;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
 .chip.plain{background:var(--surface);color:var(--soft);border-color:var(--line-strong)}
+details.chips-details>summary{display:flex;flex-wrap:wrap;gap:6px;align-items:center;cursor:pointer;list-style:none}
+details.chips-details>summary::-webkit-details-marker{display:none}
+details.chips-details>summary::after{content:"▾";flex-shrink:0;font-size:11px;color:var(--faint);padding:0 2px}
+details.chips-details[open]>summary::after{content:"▴"}
+details.chips-details[open]>summary{margin-bottom:6px}
+details.chips-details[open]>summary .chip.more{display:none}
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
 .filters a{font-size:12.5px}
 .filters a.is-on{color:var(--accent);font-weight:600}
@@ -418,7 +424,8 @@ function isShortValue(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === "number" || typeof value === "boolean") return true;
   if (typeof value === "string") return value.length <= 80 && !value.includes("\n");
-  if (Array.isArray(value)) return value.length === 0 || value.every((v) => typeof v === "string" || typeof v === "number");
+  // Long arrays (e.g. thousands of chapter titles) never make good table columns.
+  if (Array.isArray(value)) return value.length <= 8 && value.every((v) => typeof v === "string" || typeof v === "number");
   return false;
 }
 
@@ -601,7 +608,8 @@ function textPreviews(files: TextAttachment[] | undefined): string {
     .join("\n");
 }
 
-function chipsFor(value: unknown): string {
+/** Chip rows longer than `max` collapse: preview in the row, the rest behind a details toggle (or a plain "+N more" when not expandable). */
+function chipsFor(value: unknown, opts: { max?: number; expandable?: boolean } = {}): string {
   if (!Array.isArray(value) || value.length === 0) return "";
   const bits = value
     .filter((v) => typeof v === "string" && v.trim())
@@ -610,7 +618,14 @@ function chipsFor(value: unknown): string {
       if (isUlid(s)) return `<a class="chip" href="/r/${encodeURIComponent(s)}">${esc(s)}</a>`;
       return `<span class="chip">${esc(s)}</span>`;
     });
-  return bits.length ? `<span class="chips">${bits.join("")}</span>` : "";
+  if (!bits.length) return "";
+  const max = opts.max;
+  if (max === undefined || bits.length <= max) return `<span class="chips">${bits.join("")}</span>`;
+  const head = bits.slice(0, max);
+  const rest = bits.slice(max);
+  const more = `<span class="chip plain more">+${rest.length} more</span>`;
+  if (!opts.expandable) return `<span class="chips">${head.join("")}${more}</span>`;
+  return `<details class="chips-details"><summary>${head.join("")}${more}</summary><div class="chips">${rest.join("")}</div></details>`;
 }
 
 function objectCards(value: unknown): string {
@@ -656,7 +671,9 @@ function renderValue(value: unknown, opts: { compact?: boolean } = {}): string {
   if (typeof value === "number") return esc(fmtNumber(value));
   if (typeof value === "boolean") return esc(String(value));
   if (Array.isArray(value)) {
-    if (value.every((v) => typeof v === "string")) return chipsFor(value) || `<span class="muted">—</span>`;
+    if (value.every((v) => typeof v === "string")) {
+      return chipsFor(value, { max: opts.compact ? 8 : 12, expandable: !opts.compact }) || `<span class="muted">—</span>`;
+    }
     const cards = objectCards(value);
     if (cards) return cards;
     if (value.every((v) => typeof v === "number")) return esc(value.map((v) => fmtNumber(v as number)).join(", "));
