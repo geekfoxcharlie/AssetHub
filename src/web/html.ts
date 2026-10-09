@@ -289,6 +289,15 @@ export function errorPage(status: number, message: string): string {
   return layout(`Error ${status}`, [{ label: "error" }], `<div class="empty"><h1>${status}</h1><p>${esc(message)}</p></div>`);
 }
 
+/** Cheap readiness page: no directory walk, so a health probe stays fast even on huge trees. */
+export function healthPage(): string {
+  return `<!doctype html>
+<html lang="zh">
+<head><meta charset="utf-8"><title>AssetHub</title></head>
+<body>ok</body>
+</html>`;
+}
+
 // ------------------------------------------------------------------ home page
 
 export interface NamespaceFolder {

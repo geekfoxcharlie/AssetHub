@@ -12,6 +12,7 @@ import {
   LIST_PAGE_SIZE,
   errorPage,
   folderPage,
+  healthPage,
   namespacePage,
   recordPage,
   searchPage,
@@ -444,6 +445,10 @@ async function handle(req: IncomingMessage, res: ServerResponse, root: string, h
   }
   if (head === "favicon.ico") {
     send404(res);
+    return;
+  }
+  if (head === "healthz") {
+    send(res, 200, healthPage());
     return;
   }
   if (head === "") {

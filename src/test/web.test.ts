@@ -82,6 +82,16 @@ test("web: home lists namespaces with counts and hides dotfiles", async () => {
   });
 });
 
+test("web: healthz answers without a namespace walk", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  await withServer(root, async (base) => {
+    const res = await fetch(base + "/healthz");
+    assert.equal(res.status, 200);
+    assert.match(await res.text(), /<title>AssetHub<\/title>/);
+  });
+});
+
 test("web: folder browsing, breadcrumb, record entries; no dotfiles", async () => {
   const root = tmpRoot();
   const demo = seedDemo(root);
