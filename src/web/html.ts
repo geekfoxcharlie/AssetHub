@@ -174,6 +174,49 @@ table.records .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .prose.md pre{font-family:var(--mono);font-size:13px;line-height:1.55;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;white-space:pre}
 .prose.md pre code{background:none;border:0;padding:0;font-size:inherit}
 .prose.md a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.prose.md h1,.prose.md h2,.prose.md h3,.prose.md h4,.prose.md h5,.prose.md h6{scroll-margin-top:72px}
+.prose.md h4,.prose.md h5,.prose.md h6{color:var(--ink);line-height:1.4;margin:1.2em 0 .4em}
+.prose.md h4{font-size:1em}.prose.md h5,.prose.md h6{font-size:.95em;color:var(--soft)}
+.prose.md li>ul,.prose.md li>ol{margin:.2em 0 .2em;padding-left:1.2em}
+.prose.md li.task{list-style:none;margin-left:-1.1em}
+.prose.md input[type=checkbox]{margin:0 .45em 0 0;vertical-align:middle}
+.prose.md blockquote{margin:1em 0;padding:.1em 0 .1em 14px;border-left:3px solid var(--line-strong);color:var(--mut)}
+.prose.md blockquote p{margin:.5em 0}
+.prose.md hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
+.prose.md img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.prose.md del{color:var(--mut)}
+.prose.md .table-wrap{margin:1em 0;overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.prose.md table.md-table{width:100%;border-collapse:collapse;font-size:14px;line-height:1.55}
+.prose.md table.md-table th,.prose.md table.md-table td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+.prose.md table.md-table th{font-family:var(--mono);font-size:11.5px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);background:var(--bg);white-space:nowrap}
+.prose.md table.md-table tr:last-child td{border-bottom:0}
+
+.section-title.with-action{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.section-title .mini{font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--accent)}
+.section-title .mini:hover{text-decoration:underline;text-underline-offset:3px}
+
+.doc{max-width:780px;margin:0 auto}
+.doc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 16px;padding:0 0 14px;border-bottom:1px solid var(--line)}
+.doc-file{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.doc-sub{color:var(--mut);font-size:12.5px}
+.doc-sub a,.doc-actions a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.doc-actions{margin-left:auto;display:flex;gap:14px;font-size:12.5px;white-space:nowrap}
+.doc .prose.md{font-size:16.5px;line-height:1.85;color:var(--ink)}
+.doc .prose.md h1{font-family:var(--display);font-size:2em;font-weight:600;letter-spacing:-.02em;line-height:1.3;margin:.25em 0 .55em}
+.doc .prose.md h2{font-family:var(--display);font-size:1.42em;font-weight:600;line-height:1.4;margin:1.7em 0 .6em;padding-top:.35em;border-top:1px solid var(--line)}
+.doc .prose.md h3{font-size:1.1em;margin-top:1.5em}
+.doc .prose.md p{margin:.85em 0}
+.doc .prose.md .table-wrap{margin:1.2em 0}
+.doc .prose.md table.md-table{font-size:13.5px}
+.toc{margin:16px 0 4px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:10px 16px;font-size:13.5px}
+.toc>summary{cursor:pointer;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut)}
+.toc>summary::-webkit-details-marker{display:none}
+.toc>summary::after{content:"▾";float:right;color:var(--faint);font-size:11px}
+.toc[open]>summary::after{content:"▴"}
+.toc ol{list-style:none;margin:9px 0 2px;padding:0;display:flex;flex-direction:column;gap:4px}
+.toc li.lvl-3{padding-left:16px}
+.toc a{color:var(--soft)}
+.toc a:hover{color:var(--accent)}
 
 .imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin:22px 0}
 .imgs figure{margin:0}
@@ -186,6 +229,8 @@ ul.atts li:last-child{border-bottom:0}
 ul.atts .name{font-family:var(--mono);font-size:13px;color:var(--ink)}
 ul.atts a:hover .name{color:var(--accent)}
 ul.atts .meta{color:var(--mut);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+ul.atts .att-dl{font-size:12px;color:var(--accent);white-space:nowrap}
+ul.atts .att-dl:hover{text-decoration:underline;text-underline-offset:3px}
 
 .btn{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:550;padding:8px 15px;border:1px solid var(--ink);border-radius:var(--radius);background:var(--ink);color:var(--surface)}
 .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -577,6 +622,8 @@ export interface RecordPageInput {
   segs: string[];
   view: ViewName;
   rawBase: string;
+  /** Base href of the attachment reader under /n; when set, text attachments link there. */
+  readBase?: string;
   textFiles?: TextAttachment[];
 }
 
@@ -592,27 +639,39 @@ function imageGrid(files: Attachment[], rawBase: string): string {
     .join("\n");
 }
 
-function attachmentsList(files: Attachment[], rawBase: string): string {
+const READABLE_MIMES = new Set(["text/markdown", "text/plain", "text/csv"]);
+
+function attachmentsList(files: Attachment[], rawBase: string, readBase?: string): string {
   if (!files.length) return "";
   const rows = files
     .map((f) => {
       const href = `${rawBase}/${encodeURIComponent(f.name)}`;
-      const inline = f.mime.startsWith("image/");
-      return `    <li><a href="${esc(href)}"><span class="name">${esc(f.name)}</span></a><span class="meta">${esc(f.mime)} · ${fmtBytes(f.bytes)}${inline ? "" : " · download"}</span></li>`;
+      const readable = readBase !== undefined && READABLE_MIMES.has(f.mime);
+      const nameHref = readable ? `${readBase}/${encodeURIComponent(f.name)}` : href;
+      const image = f.mime.startsWith("image/");
+      const hint = readable ? " · 阅读" : image ? "" : " · download";
+      const download = readable ? `<a class="att-dl" href="${esc(href)}">下载</a>` : "";
+      return `    <li><a class="att-name" href="${esc(nameHref)}"><span class="name">${esc(f.name)}</span></a><span class="meta">${esc(f.mime)} · ${fmtBytes(f.bytes)}${hint}</span>${download}</li>`;
     })
     .join("\n");
   return `  <div class="section-title">Attachments</div>\n  <ul class="atts">\n${rows}\n  </ul>`;
 }
 
-function textPreviews(files: TextAttachment[] | undefined): string {
+function textPreviews(files: TextAttachment[] | undefined, readBase?: string, rawBase?: string): string {
   if (!files?.length) return "";
   return files
     .map((f) => {
-      const rendered =
-        f.mime === "text/markdown" || looksLikeMarkdown(f.text)
-          ? renderMarkdown(f.text)
-          : `<pre>${esc(f.text)}</pre>`;
-      return `  <div class="section-title">${esc(f.name)}</div>\n  <div class="prose md">${rendered}</div>`;
+      const markdown = f.mime === "text/markdown" || looksLikeMarkdown(f.text);
+      const rendered = markdown
+        ? renderMarkdown(f.text, rawBase !== undefined ? { base: rawBase } : {})
+        : `<pre>${esc(f.text)}</pre>`;
+      const action = readBase
+        ? `<a class="mini" href="${esc(`${readBase}/${encodeURIComponent(f.name)}`)}">独立阅读 →</a>`
+        : "";
+      const title = action
+        ? `<div class="section-title with-action"><span>${esc(f.name)}</span>${action}</div>`
+        : `<div class="section-title">${esc(f.name)}</div>`;
+      return `  ${title}\n  <div class="prose md">${rendered}</div>`;
     })
     .join("\n");
 }
@@ -854,79 +913,392 @@ function catalogCard(env: RecordEnvelope, body: string, title: string, grid: str
   return { html, used };
 }
 
-export function renderMarkdown(src: string): string {
-  const lines = src.replace(/\r\n/g, "\n").split("\n");
-  const out: string[] = [];
-  let i = 0;
-  let para: string[] = [];
-  const flushPara = () => {
-    if (!para.length) return;
-    out.push(`<p>${inlineMarkdown(para.join("\n"))}</p>`);
-    para = [];
+export interface MarkdownHeading {
+  id: string;
+  level: number;
+  text: string;
+}
+
+export interface MarkdownOptions {
+  /** Href of the folder that holds the document's attachments, for relative image paths. */
+  base?: string;
+  /** When given, headings are collected for a document outline. */
+  headings?: MarkdownHeading[];
+}
+
+interface MarkdownContext {
+  headingCounts: Map<string, number>;
+}
+
+function plainHeadingText(src: string): string {
+  return src
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[`*_~]/g, "")
+    .trim();
+}
+
+function headingId(src: string, ctx: MarkdownContext): string {
+  const slug =
+    plainHeadingText(src)
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s-]/gu, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 72) || "section";
+  const n = (ctx.headingCounts.get(slug) ?? 0) + 1;
+  ctx.headingCounts.set(slug, n);
+  return n === 1 ? slug : `${slug}-${n}`;
+}
+
+/** GFM-style table row split: outer pipes are optional, `\|` is a literal pipe. */
+function splitTableRow(line: string): string[] {
+  let s = line.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|") && !s.endsWith("\\|")) s = s.slice(0, -1);
+  const cells: string[] = [];
+  let cur = "";
+  for (let k = 0; k < s.length; k++) {
+    const ch = s[k] ?? "";
+    if (ch === "\\" && s[k + 1] === "|") {
+      cur += "|";
+      k++;
+      continue;
+    }
+    if (ch === "|") {
+      cells.push(cur.trim());
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  cells.push(cur.trim());
+  return cells;
+}
+
+type Align = "left" | "center" | "right" | null;
+
+function tableDelimiter(line: string | undefined): Align[] | null {
+  if (line === undefined || !line.includes("|")) return null;
+  const cells = splitTableRow(line);
+  if (cells.length === 0) return null;
+  if (!cells.every((c) => /^:?-{1,}:?$/.test(c))) return null;
+  return cells.map((c) => {
+    const left = c.startsWith(":");
+    const right = c.endsWith(":");
+    return left && right ? "center" : right ? "right" : left ? "left" : null;
+  });
+}
+
+interface ListMarker {
+  indent: number;
+  ordered: boolean;
+  start: number;
+  rest: string;
+}
+
+function listMarker(line: string): ListMarker | null {
+  const m = /^([ \t]*)([-+*]|\d{1,9}[.)])([ \t]+)(.*)$/.exec(line);
+  if (!m) return null;
+  const indent = (m[1] ?? "").replace(/\t/g, "    ").length;
+  const marker = m[2] ?? "";
+  const ordered = /\d/.test(marker);
+  return {
+    indent,
+    ordered,
+    start: ordered ? Number.parseInt(marker, 10) : 1,
+    rest: m[4] ?? "",
   };
+}
+
+function isRule(line: string): boolean {
+  return /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line);
+}
+
+function interruptsParagraph(line: string): boolean {
+  if (!line.trim()) return true;
+  if (/^ {0,3}#{1,6}\s/.test(line)) return true;
+  if (/^ {0,3}(?:```|~~~)/.test(line)) return true;
+  if (/^ {0,3}>/.test(line)) return true;
+  if (isRule(line)) return true;
+  return listMarker(line) !== null;
+}
+
+function joinParagraph(lines: string[]): string {
+  let text = "";
+  for (let k = 0; k < lines.length; k++) {
+    const raw = lines[k] ?? "";
+    const hard = / {2,}$/.test(raw) || raw.endsWith("\\");
+    const clean = raw.replace(/\\$/, "").replace(/[ \t]+$/, "");
+    text += k === lines.length - 1 ? clean : clean + (hard ? "\n" : " ");
+  }
+  return text;
+}
+
+interface ListNode {
+  indent: number;
+  ordered: boolean;
+  start: number;
+  lines: string[];
+  children: ListNode[];
+}
+
+function renderListGroup(nodes: ListNode[], opts: MarkdownOptions): string {
+  let html = "";
+  let k = 0;
+  while (k < nodes.length) {
+    const ordered = nodes[k]!.ordered;
+    const start = nodes[k]!.start;
+    const group: ListNode[] = [];
+    while (k < nodes.length && nodes[k]!.ordered === ordered) {
+      group.push(nodes[k]!);
+      k++;
+    }
+    const tag = ordered ? "ol" : "ul";
+    const startAttr = ordered && start !== 1 ? ` start="${start}"` : "";
+    const items = group
+      .map((node) => {
+        let text = node.lines.join(" ").trim();
+        let task = "";
+        const box = /^\[([ xX])\]\s+/.exec(text);
+        if (box) {
+          task = `<input type="checkbox" disabled${box[1]!.toLowerCase() === "x" ? " checked" : ""}> `;
+          text = text.slice(box[0].length);
+        }
+        const kids = node.children.length ? renderListGroup(node.children, opts) : "";
+        return `<li${box ? ' class="task"' : ""}>${task}${inlineMarkdown(text, opts)}${kids}</li>`;
+      })
+      .join("");
+    html += `<${tag}${startAttr}>${items}</${tag}>`;
+  }
+  return html;
+}
+
+function parseList(lines: string[], start: number, opts: MarkdownOptions): { html: string; next: number } {
+  interface RawItem {
+    indent: number;
+    ordered: boolean;
+    start: number;
+    lines: string[];
+  }
+  const raws: RawItem[] = [];
+  let i = start;
+  let cur: RawItem | null = null;
+  const first = listMarker(lines[start] ?? "");
+  const baseIndent = first?.indent ?? 0;
+  const baseOrdered = first?.ordered ?? false;
   while (i < lines.length) {
     const line = lines[i] ?? "";
-    if (line.startsWith("```")) {
-      flushPara();
-      const fenceLang = esc(line.slice(3).trim());
+    const marker = listMarker(line);
+    if (marker) {
+      if (marker.indent <= baseIndent && marker.ordered !== baseOrdered) break;
+      cur = { indent: marker.indent, ordered: marker.ordered, start: marker.start, lines: [marker.rest] };
+      raws.push(cur);
+      i++;
+      continue;
+    }
+    if (!line.trim()) {
+      const next = lines[i + 1];
+      if (next === undefined) {
+        i++;
+        break;
+      }
+      if (listMarker(next)) {
+        i++;
+        continue;
+      }
+      if (cur && /^\s{2,}\S/.test(next)) {
+        cur.lines.push("");
+        i++;
+        continue;
+      }
+      break;
+    }
+    if (!cur) break;
+    if (
+      /^ {0,3}#{1,6}\s/.test(line) ||
+      /^ {0,3}(?:```|~~~)/.test(line) ||
+      /^ {0,3}>/.test(line) ||
+      isRule(line)
+    ) {
+      break;
+    }
+    cur.lines.push(line.trim());
+    i++;
+  }
+
+  const roots: ListNode[] = [];
+  const stack: ListNode[] = [];
+  for (const raw of raws) {
+    while (stack.length && raw.indent < stack[stack.length - 1]!.indent) stack.pop();
+    const node: ListNode = { indent: raw.indent, ordered: raw.ordered, start: raw.start, lines: raw.lines, children: [] };
+    if (stack.length && raw.indent > stack[stack.length - 1]!.indent) {
+      stack[stack.length - 1]!.children.push(node);
+    } else {
+      if (stack.length) stack.pop();
+      const parent = stack[stack.length - 1];
+      if (parent) parent.children.push(node);
+      else roots.push(node);
+    }
+    stack.push(node);
+  }
+  return { html: renderListGroup(roots, opts), next: i };
+}
+
+function renderBlocks(lines: string[], opts: MarkdownOptions, ctx: MarkdownContext): string {
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    const fence = /^ {0,3}(`{3,}|~{3,})\s*(.*)$/.exec(line);
+    if (fence) {
+      const marker = fence[1] ?? "```";
+      const lang = esc((fence[2] ?? "").trim());
       i++;
       const code: string[] = [];
-      while (i < lines.length && !(lines[i] ?? "").startsWith("```")) {
+      while (i < lines.length && !(lines[i] ?? "").trimStart().startsWith(marker.slice(0, 3))) {
         code.push(lines[i] ?? "");
         i++;
       }
       if (i < lines.length) i++;
-      out.push(`<pre${fenceLang ? ` data-lang="${fenceLang}"` : ""}><code>${esc(code.join("\n"))}</code></pre>`);
+      out.push(`<pre${lang ? ` data-lang="${lang}"` : ""}><code>${esc(code.join("\n"))}</code></pre>`);
       continue;
     }
-    const heading = /^(#{1,3})\s+(.+)$/.exec(line);
+
+    const heading = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
     if (heading) {
-      flushPara();
       const level = heading[1]!.length;
-      out.push(`<h${level}>${inlineMarkdown(heading[2]!)}</h${level}>`);
+      const source = heading[2] ?? "";
+      const id = headingId(source, ctx);
+      opts.headings?.push({ id, level, text: plainHeadingText(source) });
+      out.push(`<h${level} id="${esc(id)}">${inlineMarkdown(source, opts)}</h${level}>`);
       i++;
       continue;
     }
-    if (/^\s*[-*]\s+\S/.test(line) || /^\s*\d+\.\s+\S/.test(line)) {
-      flushPara();
-      const ordered = /^\s*\d+\.\s+/.test(line);
-      const items: string[] = [];
-      while (i < lines.length && (ordered ? /^\s*\d+\.\s+\S/.test(lines[i] ?? "") : /^\s*[-*]\s+\S/.test(lines[i] ?? ""))) {
-        items.push(`<li>${inlineMarkdown((lines[i] ?? "").replace(/^\s*(?:[-*]|\d+\.)\s+/, ""))}</li>`);
+
+    if (isRule(line)) {
+      out.push("<hr>");
+      i++;
+      continue;
+    }
+
+    if (/^ {0,3}>/.test(line)) {
+      const quoted: string[] = [];
+      while (i < lines.length) {
+        const m = /^ {0,3}>[ \t]?(.*)$/.exec(lines[i] ?? "");
+        if (!m) break;
+        quoted.push(m[1] ?? "");
         i++;
       }
-      out.push(ordered ? `<ol>${items.join("")}</ol>` : `<ul>${items.join("")}</ul>`);
+      out.push(`<blockquote>${renderBlocks(quoted, opts, ctx)}</blockquote>`);
       continue;
     }
-    if (!line.trim()) {
-      flushPara();
-      i++;
+
+    const aligns = tableDelimiter(lines[i + 1]);
+    if (line.includes("|") && aligns) {
+      const header = splitTableRow(line);
+      i += 2;
+      const body: string[][] = [];
+      while (i < lines.length) {
+        const row = lines[i] ?? "";
+        if (!row.trim() || !row.includes("|")) break;
+        body.push(splitTableRow(row));
+        i++;
+      }
+      const cell = (tag: "th" | "td", value: string, index: number): string => {
+        const align = aligns[index] ?? null;
+        const style = align ? ` style="text-align:${align}"` : "";
+        return `<${tag}${style}>${inlineMarkdown(value, opts)}</${tag}>`;
+      };
+      const head = header.map((value, index) => cell("th", value, index)).join("");
+      const rows = body
+        .map((values) => {
+          const cells = header.map((_unused, index) => cell("td", values[index] ?? "", index)).join("");
+          return `<tr>${cells}</tr>`;
+        })
+        .join("");
+      out.push(
+        `<div class="table-wrap"><table class="md-table"><thead><tr>${head}</tr></thead>${rows ? `<tbody>${rows}</tbody>` : ""}</table></div>`,
+      );
       continue;
     }
-    para.push(line);
+
+    if (listMarker(line)) {
+      const parsed = parseList(lines, i, opts);
+      out.push(parsed.html);
+      i = parsed.next;
+      continue;
+    }
+
+    const para: string[] = [line];
     i++;
+    while (i < lines.length) {
+      const next = lines[i] ?? "";
+      if (interruptsParagraph(next)) break;
+      if (next.includes("|") && tableDelimiter(lines[i + 1])) break;
+      para.push(next);
+      i++;
+    }
+    out.push(`<p>${inlineMarkdown(joinParagraph(para), opts)}</p>`);
   }
-  flushPara();
   return out.join("\n");
 }
 
-function inlineMarkdown(src: string): string {
+/** Render a useful subset of GFM: headings, lists, tables, fenced code, quotes, rules, links, images. Raw HTML is escaped. */
+export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string {
+  const lines = src.replace(/\r\n?/g, "\n").replace(/\t/g, "    ").split("\n");
+  return renderBlocks(lines, opts, { headingCounts: new Map() });
+}
+
+function resolveImageSrc(raw: string, base?: string): string | null {
+  const url = raw.replace(/&amp;/g, "&").trim();
+  if (!url) return null;
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return null; // external images stay links (CSP keeps the page local)
+  if (!base) return null;
+  const clean = url.replace(/^\.\//, "");
+  return `${base}/${clean.split("/").filter(Boolean).map(encodeURIComponent).join("/")}`;
+}
+
+function inlineMarkdown(src: string, opts: MarkdownOptions = {}): string {
+  const stash: string[] = [];
+  const keep = (html: string): string => `\u0000${stash.push(html) - 1}\u0000`;
   let out = esc(src);
-  out = out.replace(/`([^`]+)`/g, (_m, code: string) => {
-    if (isUlid(code)) return `<a href="/r/${encodeURIComponent(code)}"><code>${esc(code)}</code></a>`;
-    return `<code>${code}</code>`;
+
+  // Code spans are protected before any other inline rule runs.
+  out = out.replace(/`([^`\n]+)`/g, (_m, code: string) => {
+    const body = isUlid(code) ? `<a href="/r/${encodeURIComponent(code)}"><code>${code}</code></a>` : `<code>${code}</code>`;
+    return keep(body);
   });
-  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, text: string, url: string) => {
+
+  out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_m, alt: string, rawSrc: string) => {
+    const resolved = resolveImageSrc(rawSrc, opts.base);
+    if (!resolved) {
+      const href = safeHref(rawSrc.replace(/&amp;/g, "&"));
+      return keep(href ? `<a href="${esc(href)}" rel="noreferrer">${alt || rawSrc}</a>` : alt);
+    }
+    return keep(`<img src="${esc(resolved)}" alt="${alt}" loading="lazy">`);
+  });
+
+  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_m, text: string, url: string) => {
     const href = safeHref(url.replace(/&amp;/g, "&"));
-    return href ? `<a href="${esc(href)}" rel="noreferrer">${text}</a>` : text;
+    return keep(href ? `<a href="${esc(href)}" rel="noreferrer">${text}</a>` : text);
   });
-  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  out = out.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
-  return out;
+
+  out = out.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+
+  out = out.replace(/\u0000(\d+)\u0000/g, (_m, n: string) => stash[Number(n)] ?? "");
+  return out.replace(/\n/g, "<br>");
 }
 
 export function recordPage(input: RecordPageInput): string {
-  const { env, ns, segs, view, rawBase, textFiles } = input;
+  const { env, ns, segs, view, rawBase, readBase, textFiles } = input;
   const crumbs: Crumb[] = [{ label: ns, href: `/n/${encodeURIComponent(ns)}` }];
   segs.forEach((segment, i) => {
     const href = `/n/${[ns, ...segs.slice(0, i + 1)].map(encodeURIComponent).join("/")}`;
@@ -936,8 +1308,8 @@ export function recordPage(input: RecordPageInput): string {
   const title = recordTitle(env);
   const body = recordBody(env);
   const grid = imageGrid(env.files, rawBase);
-  const atts = attachmentsList(env.files, rawBase);
-  const texts = textPreviews(textFiles);
+  const atts = attachmentsList(env.files, rawBase, readBase);
+  const texts = textPreviews(textFiles, readBase, rawBase);
   const platform = typeof env.data?.["platform"] === "string" ? String(env.data["platform"]) : "";
   let html: string;
 
@@ -990,4 +1362,51 @@ ${texts}`;
 
   html += `\n${provenanceBlock(env.provenance)}`;
   return layout(title, crumbs, html.trimEnd(), { searchNs: ns });
+}
+
+export interface DocPageInput {
+  env: RecordEnvelope;
+  ns: string;
+  /** Record folder path under the namespace, including the record folder name. */
+  segs: string[];
+  file: string;
+  mime: string;
+  bytes: number;
+  text: string;
+}
+
+/** Standalone reading page for one text attachment, with an outline for longer documents. */
+export function docPage(input: DocPageInput): string {
+  const { env, ns, segs, file, mime, bytes, text } = input;
+  const recordHref = `/n/${[ns, ...segs].map(encodeURIComponent).join("/")}`;
+  const rawHref = `/raw/${[ns, ...segs, file].map(encodeURIComponent).join("/")}`;
+  const rawBase = `/raw/${[ns, ...segs].map(encodeURIComponent).join("/")}`;
+  const headings: MarkdownHeading[] = [];
+  const markdown = mime === "text/markdown" || looksLikeMarkdown(text);
+  const rendered = markdown
+    ? renderMarkdown(text, { base: rawBase, headings })
+    : `<pre>${esc(text)}</pre>`;
+  const toc = headings.filter((h) => h.level === 2 || h.level === 3);
+  const tocHtml =
+    toc.length >= 3
+      ? `<details class="toc"><summary>目录 · ${toc.length}</summary><ol>${toc
+          .map((h) => `<li class="lvl-${h.level}"><a href="#${esc(h.id)}">${esc(h.text)}</a></li>`)
+          .join("")}</ol></details>`
+      : "";
+  const crumbs: Crumb[] = [{ label: ns, href: `/n/${encodeURIComponent(ns)}` }];
+  segs.forEach((segment, i) => {
+    const last = i === segs.length - 1;
+    const href = `/n/${[ns, ...segs.slice(0, i + 1)].map(encodeURIComponent).join("/")}`;
+    crumbs.push({ label: last ? recordTitle(env) : segment, href });
+  });
+  crumbs.push({ label: file });
+  const body = `  <div class="doc">
+    <div class="doc-head">
+      <span class="doc-file">${esc(file)}</span>
+      <span class="doc-sub">${esc(recordTitle(env))} · ${esc(mime)} · ${fmtBytes(bytes)}</span>
+      <span class="doc-actions"><a href="${esc(recordHref)}">返回记录</a><a href="${esc(rawHref)}">下载原文</a></span>
+    </div>
+${tocHtml ? `${tocHtml}\n` : ""}    <div class="prose md">${rendered}</div>
+  </div>`;
+  return layout(`${recordTitle(env)} · ${file}`, crumbs, body, { searchNs: ns });
 }

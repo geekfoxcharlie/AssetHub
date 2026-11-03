@@ -199,6 +199,63 @@ test("web: non-image attachments download; markdown served with disposition", as
   });
 });
 
+test("web: markdown attachments have a standalone reader page with tables and an outline", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  const id = hub.idfor("web:report");
+  const md = [
+    "# 雅思报告",
+    "",
+    "| 指标 | 数值 |",
+    "| --- | ---: |",
+    "| 总账号 | 55 |",
+    "",
+    "## 竞争格局",
+    "",
+    "内容一。",
+    "",
+    "## 变现模式",
+    "",
+    "内容二。",
+    "",
+    "## 策略建议",
+    "",
+    "- **要点**",
+    "  - 子项",
+    "",
+    "> 引用",
+  ].join("\n");
+  hub.put({
+    ns: "douyin-hub",
+    dir: "zhangsan/docs",
+    schemaId: "note",
+    id,
+    data: { title: "雅思报告" },
+    files: [{ name: "report.md", bytes: Buffer.from(md) }],
+  });
+  await withServer(root, async (base) => {
+    const record = await (await fetch(base + `/n/douyin-hub/zhangsan/docs/${id}`)).text();
+    assert.ok(record.includes('<table class="md-table">'), "record preview renders the table");
+    assert.ok(record.includes(`href="/n/douyin-hub/zhangsan/docs/${id}/report.md"`), "attachment links to the reader");
+    assert.ok(record.includes("独立阅读"));
+
+    const res = await fetch(base + `/n/douyin-hub/zhangsan/docs/${id}/report.md`);
+    assert.equal(res.status, 200);
+    const html = await res.text();
+    assert.ok(html.includes('<div class="doc">'));
+    assert.ok(html.includes('<table class="md-table">'));
+    assert.ok(html.includes('<details class="toc">'));
+    assert.ok(html.includes('href="#竞争格局"'));
+    assert.ok(html.includes('<h2 id="竞争格局">竞争格局</h2>'));
+    assert.ok(html.includes(`href="/raw/douyin-hub/zhangsan/docs/${id}/report.md"`), "download link");
+    assert.ok(html.includes(`href="/n/douyin-hub/zhangsan/docs/${id}"`), "back to the record");
+
+    const textRes = await fetch(base + `/n/douyin-hub/zhangsan/docs/${id}/record.json`);
+    assert.equal(textRes.status, 404, "record.json is not an attachment");
+  });
+});
+
 test("web: traversal, dotfiles, and bad ids are rejected", async () => {
   const root = tmpRoot();
   seedDemo(root);

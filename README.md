@@ -51,7 +51,7 @@ A record is one folder, named by its id, containing a `record.json` and the file
 | Record | One folder: `record.json` plus attachments. Any folder containing `record.json` is a record; all other folders are containers. |
 | Namespace | A first-level folder in the data root, one per project. Every write names its namespace and cannot write outside it. Reads cross projects by default. |
 | Schema | A JSON Schema defining what `data` may contain. Resolved per project first, then globally, then from the built-ins (`note`, `article`, `webpage`, `post`, `image`, `file`, `source`, `demand`). |
-| Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. |
+| Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. Markdown attachments get a table-of-contents reading page at `/n/<ns>/.../<record>/<file>`. |
 
 ## Quick start
 

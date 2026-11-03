@@ -10,6 +10,7 @@ import { AppError } from "../lib/errors.js";
 import { isUlid } from "../lib/ulid.js";
 import {
   LIST_PAGE_SIZE,
+  docPage,
   errorPage,
   folderPage,
   healthPage,
@@ -33,6 +34,7 @@ const HTML_HEADERS: Record<string, string | number> = {
 };
 
 const TEXT_INLINE_MAX = 200_000;
+const TEXT_READ_MAX = 2_000_000;
 const TEXT_INLINE_MIMES = new Set(["text/markdown", "text/plain", "text/csv"]);
 
 function isHead(res: ServerResponse): boolean {
@@ -238,9 +240,40 @@ function handleNamespacePath(
       // unresolvable schema falls back to the default view
     }
     const rawBase = `/raw/${[ns, ...rest].map(encodeURIComponent).join("/")}`;
+    const readBase = `/n/${[ns, ...rest].map(encodeURIComponent).join("/")}`;
     const textFiles = readTextAttachments(abs, parsed.env.files ?? []);
-    send(res, 200, recordPage({ env: parsed.env, ns, segs: rest, view, rawBase, textFiles }));
+    send(res, 200, recordPage({ env: parsed.env, ns, segs: rest, view, rawBase, readBase, textFiles }));
     return;
+  }
+
+  // /n/<ns>/.../<record>/<file> reads one text attachment as a standalone document.
+  if (rest.length >= 2) {
+    const file = rest[rest.length - 1] ?? "";
+    const recordSegs = rest.slice(0, -1);
+    const recordDir = path.resolve(root, ns, ...recordSegs);
+    if (isInside(root, recordDir) && isRecordDir(recordDir)) {
+      const parsed = tryReadEnvelope(recordDir);
+      const env = parsed.ok ? parsed.env : undefined;
+      const entry =
+        env && Array.isArray(env.files)
+          ? env.files.find((f) => f && typeof f.name === "string" && f.name === file)
+          : undefined;
+      if (env && entry && typeof entry.mime === "string" && typeof entry.bytes === "number" && TEXT_INLINE_MIMES.has(entry.mime)) {
+        if (entry.bytes > TEXT_READ_MAX) {
+          send(res, 413, errorPage(413, "附件过大，暂不支持在线预览，请下载原文。"));
+          return;
+        }
+        let text: string;
+        try {
+          text = readFileSync(path.join(recordDir, file), "utf8");
+        } catch {
+          send404(res);
+          return;
+        }
+        send(res, 200, docPage({ env, ns, segs: recordSegs, file, mime: entry.mime, bytes: entry.bytes, text }));
+        return;
+      }
+    }
   }
   let dirents;
   try {
