@@ -105,12 +105,14 @@ Walks every record (or one namespace) and reports findings without writing:
 | `/n/<ns>/<path>/<folder>` | record page, view chosen by the schema's `x-assethub.view`. `card` without `platform` uses a catalog layout. Long text is pulled out of the field table; object arrays become cards; `.md`/`.txt` attachments are inlined with Markdown tables, quotes, lists and code. |
 | `/n/<ns>/<path>/<folder>/<file>` | standalone reader for one registered text attachment (`text/markdown`, `text/plain`, `text/csv`): reading column, table of contents, download link. Files over 2 MB stay download-only. |
 | `/q?q=&namespace=&schema=` | substring search via `Hub.query` (same matching as the CLI, default limit 100) |
-| `/r/<ulid>` | 302 to the record's folder URL, so `source_id` values can be links |
+| `/r/<ulid>` | 302 to the record's folder URL, so a bare ULID can be a link |
 | `/raw/<ns>/<path>/<folder>/<file>` | attachment bytes — inline for images, `attachment` otherwise |
+
+A string value, a string in an array, or a Markdown link target can point inside the store. A value that is only a ULID renders as `/r/<ulid>`. A `hub:` place reference renders as `/n/<namespace>/<path>`. `hub:<path>` uses the namespace of the page being rendered. `hub://<namespace>/<path>` names the namespace, and `hub://<namespace>` opens that namespace root. The visible text is the reference with the `hub:` or `hub://` prefix removed. Segments follow the viewer path rules (non-empty, no leading `.`, which also excludes `..` and dotfiles) and also reject whitespace and backslashes. An invalid reference stays text. The `href` is always a same-origin path; the `hub:` prefix is never emitted. Rendering does not check that the target exists.
 
 Titles come from `title` → `display_name` → `full_name` → `name` → `key` → a body snippet, never the ULID when an identity field exists. List subtitles use excerpt/summary/url/status/tags. Record lists sort by `created_at` descending.
 
-Safety: every path segment is decoded then validated (non-empty, no dotfiles — which also excludes `..`), the resolved path must stay under the root, only files registered in `files[]` are served, all user data is HTML-escaped, URL fields link only `http`/`https`/`mailto`, Markdown renders a strict escaped GFM subset (no raw HTML, same-origin images only), and responses carry `Content-Security-Policy`, `nosniff`, and `no-store` headers. The pages contain zero client-side JavaScript and no external assets.
+Safety: every path segment is decoded then validated (non-empty, no dotfiles — which also excludes `..`), the resolved path must stay under the root, only files registered in `files[]` are served, all user data is HTML-escaped, URL fields link only `http`/`https`/`mailto`, `hub:` references are rewritten to `/n/` before they become an `href`, Markdown renders a strict escaped GFM subset (no raw HTML, same-origin images only), and responses carry `Content-Security-Policy`, `nosniff`, and `no-store` headers. The pages contain zero client-side JavaScript and no external assets.
 
 ## 9. Error codes
 

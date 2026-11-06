@@ -7,6 +7,7 @@ import {
   recordTitle,
   recordUrl,
 } from "../lib/format.js";
+import { NS_PATTERN, safeSegment } from "../lib/paths.js";
 import { isUlid } from "../lib/ulid.js";
 
 export const VIEW_NAMES = new Set(["record", "card", "gallery", "article"]);
@@ -31,6 +32,48 @@ export function safeHref(url: string): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Resolve a `hub:` place reference to a same-origin `/n/` path.
+ * `hub:<path>` uses `ns`. `hub://<namespace>/<path>` names the namespace and ignores `ns`.
+ * Returns null when the value is not a hub reference or any segment is unsafe.
+ */
+export function hubHref(value: string, ns?: string | null): { href: string; label: string } | null {
+  if (!value.startsWith("hub:")) return null;
+  if (/[\s\\]/.test(value)) return null;
+
+  let namespace: string;
+  let pathPart: string;
+  let label: string;
+  if (value.startsWith("hub://")) {
+    const rest = value.slice("hub://".length);
+    const slash = rest.indexOf("/");
+    if (slash === -1) {
+      namespace = rest;
+      pathPart = "";
+      label = rest;
+    } else {
+      namespace = rest.slice(0, slash);
+      pathPart = rest.slice(slash + 1);
+      if (!pathPart) return null;
+      label = rest;
+    }
+    if (!NS_PATTERN.test(namespace) || namespace === "schemas") return null;
+  } else {
+    if (!ns || !NS_PATTERN.test(ns) || ns === "schemas") return null;
+    namespace = ns;
+    pathPart = value.slice("hub:".length);
+    if (!pathPart) return null;
+    label = pathPart;
+  }
+
+  const segments = pathPart.length === 0 ? [] : pathPart.split("/");
+  if (segments.some((segment) => !safeSegment(segment))) return null;
+  return {
+    href: `/n/${[namespace, ...segments].map((segment) => encodeURIComponent(segment)).join("/")}`,
+    label,
+  };
 }
 
 export function viewOf(schema: Record<string, unknown>): ViewName {
@@ -521,13 +564,13 @@ export function tableColumnsFor(records: RecordEntry[]): string[] | null {
   return keys;
 }
 
-function recordsTable(records: RecordEntry[], columns: string[]): string {
+function recordsTable(records: RecordEntry[], columns: string[], ns: string): string {
   const head = columns.map((c) => `<th>${esc(c)}</th>`).join("");
   const rows = records
     .map((r) => {
       const cells = columns
         .map((c) => {
-          const rendered = renderValue(r.data?.[c], { compact: true });
+          const rendered = renderValue(r.data?.[c], { compact: true, ns });
           const num = typeof r.data?.[c] === "number" ? " class=\"num\"" : "";
           return `<td${num}>${rendered}</td>`;
         })
@@ -574,7 +617,7 @@ export function folderPage(input: FolderPageInput): string {
   if (schemas && schemas.length) parts.push(schemaFilters(base, schemas, schemaFilter));
   if (records.length) {
     parts.push(`  <div class="section-title">记录</div>`);
-    parts.push(tableColumns && tableColumns.length ? recordsTable(records, tableColumns) : recordsList(records));
+    parts.push(tableColumns && tableColumns.length ? recordsTable(records, tableColumns, ns) : recordsList(records));
     parts.push(pager(base, page, pageSize, totalRecords, schemaFilter));
   } else if (!folders.length) {
     parts.push(`  <div class="empty"><p>This folder is empty.</p></div>`);
@@ -657,13 +700,13 @@ function attachmentsList(files: Attachment[], rawBase: string, readBase?: string
   return `  <div class="section-title">Attachments</div>\n  <ul class="atts">\n${rows}\n  </ul>`;
 }
 
-function textPreviews(files: TextAttachment[] | undefined, readBase?: string, rawBase?: string): string {
+function textPreviews(files: TextAttachment[] | undefined, readBase?: string, rawBase?: string, ns?: string): string {
   if (!files?.length) return "";
   return files
     .map((f) => {
       const markdown = f.mime === "text/markdown" || looksLikeMarkdown(f.text);
       const rendered = markdown
-        ? renderMarkdown(f.text, rawBase !== undefined ? { base: rawBase } : {})
+        ? renderMarkdown(f.text, rawBase !== undefined ? { base: rawBase, ns } : { ns })
         : `<pre>${esc(f.text)}</pre>`;
       const action = readBase
         ? `<a class="mini" href="${esc(`${readBase}/${encodeURIComponent(f.name)}`)}">独立阅读 →</a>`
@@ -677,13 +720,15 @@ function textPreviews(files: TextAttachment[] | undefined, readBase?: string, ra
 }
 
 /** Chip rows longer than `max` collapse: preview in the row, the rest behind a details toggle (or a plain "+N more" when not expandable). */
-function chipsFor(value: unknown, opts: { max?: number; expandable?: boolean } = {}): string {
+function chipsFor(value: unknown, opts: { max?: number; expandable?: boolean; ns?: string | undefined } = {}): string {
   if (!Array.isArray(value) || value.length === 0) return "";
   const bits = value
     .filter((v) => typeof v === "string" && v.trim())
     .map((v) => {
       const s = String(v);
       if (isUlid(s)) return `<a class="chip" href="/r/${encodeURIComponent(s)}">${esc(s)}</a>`;
+      const place = hubHref(s, opts.ns);
+      if (place) return `<a class="chip" href="${esc(place.href)}">${esc(place.label)}</a>`;
       return `<span class="chip">${esc(s)}</span>`;
     });
   if (!bits.length) return "";
@@ -696,16 +741,19 @@ function chipsFor(value: unknown, opts: { max?: number; expandable?: boolean } =
   return `<details class="chips-details"><summary>${head.join("")}${more}</summary><div class="chips">${rest.join("")}</div></details>`;
 }
 
-function objectCards(value: unknown): string {
+function objectCards(value: unknown, ns?: string | undefined): string {
   if (!Array.isArray(value) || value.length === 0) return "";
   if (!value.every((v) => typeof v === "object" && v !== null && !Array.isArray(v))) return "";
   const cards = (value as Record<string, unknown>[]).map((obj) => {
     const title = typeof obj.label === "string" ? obj.label : typeof obj.title === "string" ? obj.title : typeof obj.name === "string" ? obj.name : "";
     const note = typeof obj.note === "string" ? obj.note : "";
-    const keywords = Array.isArray(obj.keywords) ? chipsFor(obj.keywords) : "";
+    const keywords = Array.isArray(obj.keywords) ? chipsFor(obj.keywords, { ns }) : "";
     const rest = Object.entries(obj)
       .filter(([k]) => !["label", "title", "name", "note", "keywords"].includes(k))
-      .map(([k, v]) => `<span class="chip plain">${esc(k)}: ${esc(typeof v === "string" || typeof v === "number" || typeof v === "boolean" ? String(v) : JSON.stringify(v))}</span>`)
+      .map(([k, v]) => {
+        const shown = typeof v === "string" ? renderValue(v, { compact: true, ns }) : esc(typeof v === "number" ? fmtNumber(v) : typeof v === "boolean" ? String(v) : JSON.stringify(v));
+        return `<span class="chip plain">${esc(k)}: ${shown}</span>`;
+      })
       .join("");
     return `<div class="obj-card">${title ? `<div class="obj-title">${esc(title)}</div>` : ""}${keywords}${rest ? `<div class="chips">${rest}</div>` : ""}${note ? `<p class="obj-note">${esc(note)}</p>` : ""}</div>`;
   });
@@ -716,23 +764,25 @@ function ulidHref(value: string): string | null {
   return isUlid(value) ? `/r/${encodeURIComponent(value)}` : null;
 }
 
-function renderValue(value: unknown, opts: { compact?: boolean } = {}): string {
+function renderValue(value: unknown, opts: { compact?: boolean; ns?: string | undefined } = {}): string {
   if (typeof value === "string") {
     const href = safeHref(value);
     if (href) return `<a href="${esc(href)}" rel="noreferrer">${esc(value)}</a>`;
     const idHref = ulidHref(value);
     if (idHref) return `<a href="${esc(idHref)}" class="mono">${esc(value)}</a>`;
+    const place = hubHref(value, opts.ns);
+    if (place) return `<a href="${esc(place.href)}">${esc(place.label)}</a>`;
     const trimmed = value.trim();
     if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
       try {
         const parsed = JSON.parse(trimmed);
         if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
-          return renderKV(parsed);
+          return renderKV(parsed, opts.ns);
         }
       } catch { /* not valid JSON, fall through */ }
     }
     if (!opts.compact && (value.includes("\n") || value.length > 160)) {
-      return looksLikeMarkdown(value) ? `<div class="prose md">${renderMarkdown(value)}</div>` : `<div class="prose">${esc(value)}</div>`;
+      return looksLikeMarkdown(value) ? `<div class="prose md">${renderMarkdown(value, { ns: opts.ns })}</div>` : `<div class="prose">${esc(value)}</div>`;
     }
     return esc(value);
   }
@@ -740,24 +790,26 @@ function renderValue(value: unknown, opts: { compact?: boolean } = {}): string {
   if (typeof value === "boolean") return esc(String(value));
   if (Array.isArray(value)) {
     if (value.every((v) => typeof v === "string")) {
-      return chipsFor(value, { max: opts.compact ? 8 : 12, expandable: !opts.compact }) || `<span class="muted">—</span>`;
+      return chipsFor(value, { max: opts.compact ? 8 : 12, expandable: !opts.compact, ns: opts.ns }) || `<span class="muted">—</span>`;
     }
-    const cards = objectCards(value);
+    const cards = objectCards(value, opts.ns);
     if (cards) return cards;
     if (value.every((v) => typeof v === "number")) return esc(value.map((v) => fmtNumber(v as number)).join(", "));
     return esc(value.map((v) => String(v)).join(", "));
   }
   if (value === null || value === undefined) return `<span class="muted">—</span>`;
-  if (typeof value === "object") return renderKV(value as Record<string, unknown>);
+  if (typeof value === "object") return renderKV(value as Record<string, unknown>, opts.ns);
   return esc(JSON.stringify(value));
 }
 
-function renderKV(obj: Record<string, unknown>): string {
+function renderKV(obj: Record<string, unknown>, ns?: string | undefined): string {
   const entries = Object.entries(obj);
   if (entries.length === 0) return `<span class="muted">—</span>`;
   const rows = entries.map(([k, v]) => {
-    const display = typeof v === "number" ? fmtNumber(v) : String(v);
-    return `<tr><td class="kv-key">${esc(k)}</td><td class="kv-val">${esc(display)}</td></tr>`;
+    const display = typeof v === "string"
+      ? renderValue(v, { compact: true, ns })
+      : esc(typeof v === "number" ? fmtNumber(v) : String(v));
+    return `<tr><td class="kv-key">${esc(k)}</td><td class="kv-val">${display}</td></tr>`;
   });
   return `<table class="kv">${rows.join("")}</table>`;
 }
@@ -770,12 +822,12 @@ function isEmptyValue(value: unknown): boolean {
   return false;
 }
 
-function fieldsTable(env: RecordEnvelope, skip: string[] = []): string {
+function fieldsTable(env: RecordEnvelope, skip: string[] = [], ns: string = env.namespace): string {
   const skipSet = new Set(skip);
   const rows = Object.entries(env.data ?? {})
     .filter(([key, value]) => !skipSet.has(key) && !isEmptyValue(value))
     .map(([key, value]) => {
-      const rendered = renderValue(value);
+      const rendered = renderValue(value, { ns });
       return `    <tr><th>${esc(key)}</th><td>${rendered}</td></tr>`;
     })
     .join("\n");
@@ -783,7 +835,7 @@ function fieldsTable(env: RecordEnvelope, skip: string[] = []): string {
   return `  <table class="fields">\n${rows}\n  </table>`;
 }
 
-function proseBlocks(env: RecordEnvelope, skip: string[] = []): { html: string; used: string[] } {
+function proseBlocks(env: RecordEnvelope, skip: string[] = [], ns: string = env.namespace): { html: string; used: string[] } {
   const skipSet = new Set(skip);
   const used: string[] = [];
   const parts: string[] = [];
@@ -792,7 +844,7 @@ function proseBlocks(env: RecordEnvelope, skip: string[] = []): { html: string; 
     const long = PROSE_KEY_SET.has(key) || value.includes("\n") || value.length > 160;
     if (!long) continue;
     used.push(key);
-    const body = looksLikeMarkdown(value) ? `<div class="prose md">${renderMarkdown(value)}</div>` : `<div class="prose">${esc(value)}</div>`;
+    const body = looksLikeMarkdown(value) ? `<div class="prose md">${renderMarkdown(value, { ns })}</div>` : `<div class="prose">${esc(value)}</div>`;
     const label = key === "content" || key === "excerpt" || key === "summary" || used.length === 1 && skipSet.has("title") ? "" : `  <div class="section-title">${esc(key)}</div>\n`;
     parts.push(`${label}${body}`);
   }
@@ -839,7 +891,7 @@ function originalButton(env: RecordEnvelope): string {
   return link ? `    <p><a class="btn" href="${esc(link)}" rel="noreferrer">查看原文 <span class="arrow">→</span></a></p>` : "";
 }
 
-function metricChips(env: RecordEnvelope): { html: string; used: string[] } {
+function metricChips(env: RecordEnvelope, ns: string = env.namespace): { html: string; used: string[] } {
   const used: string[] = [];
   const bits: string[] = [];
   for (const [key, value] of Object.entries(env.data ?? {})) {
@@ -854,7 +906,7 @@ function metricChips(env: RecordEnvelope): { html: string; used: string[] } {
       }
     }
   }
-  const tags = chipsFor(env.data?.["tags"]);
+  const tags = chipsFor(env.data?.["tags"], { ns });
   if (tags) used.push("tags");
   const html = bits.length || tags ? `<div class="metrics">${bits.join("")}${tags}</div>` : "";
   return { html, used };
@@ -895,11 +947,11 @@ function socialCard(env: RecordEnvelope, body: string, title: string, grid: stri
   </article>`;
 }
 
-function catalogCard(env: RecordEnvelope, body: string, title: string, grid: string): { html: string; used: string[] } {
-  const metrics = metricChips(env);
+function catalogCard(env: RecordEnvelope, body: string, title: string, grid: string, ns: string = env.namespace): { html: string; used: string[] } {
+  const metrics = metricChips(env, ns);
   const prose = body
     ? looksLikeMarkdown(body)
-      ? `<div class="prose md">${renderMarkdown(body)}</div>`
+      ? `<div class="prose md">${renderMarkdown(body, { ns })}</div>`
       : `<div class="prose">${esc(body)}</div>`
     : "";
   const used = [...metrics.used, ...BODY_KEYS.filter((k) => env.data?.[k] === body), ...TITLE_KEYS.filter((k) => env.data?.[k] === title), ...["url", "html_url", "github_url", "skill_md_url", "link", "source"]];
@@ -922,6 +974,8 @@ export interface MarkdownHeading {
 export interface MarkdownOptions {
   /** Href of the folder that holds the document's attachments, for relative image paths. */
   base?: string;
+  /** Namespace used to resolve relative `hub:` links. */
+  ns?: string | undefined;
   /** When given, headings are collected for a document outline. */
   headings?: MarkdownHeading[];
 }
@@ -1264,6 +1318,22 @@ function resolveImageSrc(raw: string, base?: string): string | null {
   return `${base}/${clean.split("/").filter(Boolean).map(encodeURIComponent).join("/")}`;
 }
 
+/** Same-origin viewer links stay bare. Outbound links keep noreferrer. */
+function linkRel(href: string): string {
+  return href.startsWith("/") ? "" : ` rel="noreferrer"`;
+}
+
+/** Markdown link target: external URL, hub: place, or a bare record id. */
+function markdownTarget(raw: string, ns?: string | undefined): string | null {
+  const url = raw.replace(/&amp;/g, "&");
+  const external = safeHref(url);
+  if (external) return external;
+  const place = hubHref(url, ns);
+  if (place) return place.href;
+  if (isUlid(url)) return `/r/${encodeURIComponent(url)}`;
+  return null;
+}
+
 function inlineMarkdown(src: string, opts: MarkdownOptions = {}): string {
   const stash: string[] = [];
   const keep = (html: string): string => `\u0000${stash.push(html) - 1}\u0000`;
@@ -1278,15 +1348,15 @@ function inlineMarkdown(src: string, opts: MarkdownOptions = {}): string {
   out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_m, alt: string, rawSrc: string) => {
     const resolved = resolveImageSrc(rawSrc, opts.base);
     if (!resolved) {
-      const href = safeHref(rawSrc.replace(/&amp;/g, "&"));
-      return keep(href ? `<a href="${esc(href)}" rel="noreferrer">${alt || rawSrc}</a>` : alt);
+      const href = markdownTarget(rawSrc, opts.ns);
+      return keep(href ? `<a href="${esc(href)}"${linkRel(href)}>${alt || rawSrc}</a>` : alt);
     }
     return keep(`<img src="${esc(resolved)}" alt="${alt}" loading="lazy">`);
   });
 
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_m, text: string, url: string) => {
-    const href = safeHref(url.replace(/&amp;/g, "&"));
-    return keep(href ? `<a href="${esc(href)}" rel="noreferrer">${text}</a>` : text);
+    const href = markdownTarget(url, opts.ns);
+    return keep(href ? `<a href="${esc(href)}"${linkRel(href)}>${text}</a>` : text);
   });
 
   out = out.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
@@ -1309,32 +1379,32 @@ export function recordPage(input: RecordPageInput): string {
   const body = recordBody(env);
   const grid = imageGrid(env.files, rawBase);
   const atts = attachmentsList(env.files, rawBase, readBase);
-  const texts = textPreviews(textFiles, readBase, rawBase);
+  const texts = textPreviews(textFiles, readBase, rawBase, ns);
   const platform = typeof env.data?.["platform"] === "string" ? String(env.data["platform"]) : "";
   let html: string;
 
   if (view === "card" && platform) {
     html = `${socialCard(env, body, title, grid)}
-${fieldsTable(env, ["content", "author", "platform", "url", "published_at", "summary", "description"])}
+${fieldsTable(env, ["content", "author", "platform", "url", "published_at", "summary", "description"], ns)}
 ${atts}
 ${texts}`;
   } else if (view === "card") {
-    const card = catalogCard(env, body, title, grid);
+    const card = catalogCard(env, body, title, grid, ns);
     html = `${card.html}
-${fieldsTable(env, [...card.used, "content", "author", "platform", "published_at", "fetched_at"])}
+${fieldsTable(env, [...card.used, "content", "author", "platform", "published_at", "fetched_at"], ns)}
 ${atts}
 ${texts}`;
   } else if (view === "gallery") {
     html = `  <div class="page-head"><h1>${esc(title)}</h1><div class="sub">${metaLine(env, [ns])}</div></div>
 ${grid ? `  <div class="imgs gallery-first">\n${grid}\n  </div>` : `  <div class="empty"><p>No images.</p></div>`}
   <div class="section-title">Metadata</div>
-${fieldsTable(env, ["title"])}
+${fieldsTable(env, ["title"], ns)}
 ${atts}
 ${texts}`;
   } else if (view === "article") {
     const articleBody = body
       ? looksLikeMarkdown(body)
-        ? `<div class="prose md">${renderMarkdown(body)}</div>`
+        ? `<div class="prose md">${renderMarkdown(body, { ns })}</div>`
         : `<div class="prose">${esc(body)}</div>`
       : "";
     const author = recordAuthor(env);
@@ -1344,18 +1414,18 @@ ${texts}`;
     ${articleBody}
     ${originalButton(env)}
   </article>
-${fieldsTable(env, ["title", "content", "excerpt", "summary", "author", "published_at", "name", "display_name", "url", "html_url", "github_url", "skill_md_url"])}
+${fieldsTable(env, ["title", "content", "excerpt", "summary", "author", "published_at", "name", "display_name", "url", "html_url", "github_url", "skill_md_url"], ns)}
 ${atts}
 ${texts}`;
   } else {
-    const prose = proseBlocks(env, ["title", "name", "display_name", "full_name"]);
+    const prose = proseBlocks(env, ["title", "name", "display_name", "full_name"], ns);
     const skip = ["title", "name", "display_name", "full_name", ...prose.used];
     if (firstUrl(env)) skip.push("url", "html_url", "github_url", "skill_md_url", "link", "source");
     html = `  <div class="page-head"><h1>${esc(title)}</h1><div class="sub">${metaLine(env, [ns])}</div></div>
 ${originalButton(env)}
 ${prose.html}
 ${grid ? `  <div class="imgs">\n${grid}\n  </div>` : ""}
-${fieldsTable(env, skip)}
+${fieldsTable(env, skip, ns)}
 ${atts}
 ${texts}`;
   }
@@ -1384,7 +1454,7 @@ export function docPage(input: DocPageInput): string {
   const headings: MarkdownHeading[] = [];
   const markdown = mime === "text/markdown" || looksLikeMarkdown(text);
   const rendered = markdown
-    ? renderMarkdown(text, { base: rawBase, headings })
+    ? renderMarkdown(text, { base: rawBase, headings, ns })
     : `<pre>${esc(text)}</pre>`;
   const toc = headings.filter((h) => h.level === 2 || h.level === 3);
   const tocHtml =

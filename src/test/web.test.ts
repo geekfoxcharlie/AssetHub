@@ -512,3 +512,53 @@ test("web: pagination slices long folders", async () => {
     assert.ok(page2.includes("previous"));
   });
 });
+
+test("web: hub place references and record ids become links", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  const recordId = "01J8AAAA9TQZ8VZEWCSRGQKP2M";
+  hub.addSchema(
+    "demo_link",
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["title"],
+      properties: {
+        title: { type: "string" },
+        place: { type: "string" },
+        see_also: { type: "array", items: { type: "string" } },
+        content: { type: "string" },
+        broken: { type: "string" },
+      },
+    },
+    "douyin-hub",
+  );
+  const id = hub.idfor("web:hub:link");
+  hub.put({
+    ns: "douyin-hub",
+    dir: "notes",
+    schemaId: "demo_link",
+    id,
+    data: {
+      title: "Links",
+      place: "hub:notes/weekly",
+      see_also: ["hub://archive/kept", recordId],
+      broken: "hub:../secret",
+      content: "Open [weekly](hub:notes/weekly) and [record](01J8AAAA9TQZ8VZEWCSRGQKP2M).",
+    },
+    files: [{ name: "pointer.md", bytes: Buffer.from("See [weekly](hub:notes/weekly).\n") }],
+  });
+  await withServer(root, async (base) => {
+    const page = await (await fetch(`${base}/n/douyin-hub/notes/${id}`)).text();
+    assert.ok(page.includes('href="/n/douyin-hub/notes/weekly"'), "relative hub: uses the page namespace");
+    assert.ok(page.includes(">notes/weekly</a>"), "field text drops the hub: prefix");
+    assert.ok(!page.includes(">hub:notes/weekly</a>"));
+    assert.ok(page.includes('href="/n/archive/kept"'), "hub:// names the namespace");
+    assert.ok(page.includes(`href="/r/${recordId}"`), "a bare ULID links to the record");
+    assert.ok(page.includes("hub:../secret"));
+    assert.ok(!page.includes('href="/n/douyin-hub/../secret"'));
+    const doc = await (await fetch(`${base}/n/douyin-hub/notes/${id}/pointer.md`)).text();
+    assert.ok(doc.includes('href="/n/douyin-hub/notes/weekly"'), "attachment reader resolves hub: too");
+  });
+});

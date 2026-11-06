@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { renderMarkdown } from "../web/html.js";
+import { hubHref, renderMarkdown } from "../web/html.js";
 
 test("markdown: GFM tables render with header, body and alignment", () => {
   const html = renderMarkdown(
@@ -57,6 +57,46 @@ test("markdown: relative images resolve under the record's attachment folder", (
   const html = renderMarkdown("![图](cover.png)\n\n![远程](https://example.com/a.png)", { base: "/raw/ns/dir/rec" });
   assert.ok(html.includes('<img src="/raw/ns/dir/rec/cover.png" alt="图" loading="lazy">'));
   assert.ok(html.includes('<a href="https://example.com/a.png" rel="noreferrer">远程</a>'));
+});
+
+test("hubHref resolves place references and rejects unsafe paths", () => {
+  assert.deepEqual(hubHref("hub:notes/weekly", "reading"), {
+    href: "/n/reading/notes/weekly",
+    label: "notes/weekly",
+  });
+  assert.deepEqual(hubHref("hub://archive/notes/weekly", null), {
+    href: "/n/archive/notes/weekly",
+    label: "archive/notes/weekly",
+  });
+  assert.deepEqual(hubHref("hub://archive", "reading"), {
+    href: "/n/archive",
+    label: "archive",
+  });
+  assert.equal(hubHref("hub:notes/每周", "reading")?.href, `/n/reading/notes/${encodeURIComponent("每周")}`);
+  assert.equal(hubHref("hub:notes/weekly", null), null);
+  assert.equal(hubHref("hub:", "reading"), null);
+  assert.equal(hubHref("hub:../secret", "reading"), null);
+  assert.equal(hubHref("hub:.hidden", "reading"), null);
+  assert.equal(hubHref("hub:notes/a b", "reading"), null);
+  assert.equal(hubHref("hub:notes/a\\b", "reading"), null);
+  assert.equal(hubHref("hub://schemas/x", "reading"), null);
+  assert.equal(hubHref("hub://archive/", "reading"), null);
+  assert.equal(hubHref("notes/weekly", "reading"), null);
+});
+
+test("markdown links resolve hub places and record ids", () => {
+  const id = "01J8AAAA9TQZ8VZEWCSRGQKP2M";
+  const html = renderMarkdown(`[weekly](hub:notes/weekly)\n\n[record](${id})\n\n[bad](hub:../secret)\n\n[else](hub://archive/kept)`, { ns: "reading" });
+  assert.ok(html.includes('<a href="/n/reading/notes/weekly">weekly</a>'));
+  assert.ok(html.includes(`<a href="/r/${id}">record</a>`));
+  assert.ok(html.includes('<a href="/n/archive/kept">else</a>'));
+  assert.ok(!html.includes('href="/n/reading/../secret"'));
+  assert.ok(html.includes(">bad</"));
+  const noNs = renderMarkdown("[weekly](hub:notes/weekly) [else](hub://archive/kept)");
+  assert.ok(!noNs.includes("/n/reading/"));
+  assert.ok(noNs.includes("weekly"));
+  assert.ok(!noNs.includes('href="/n/notes/weekly"'));
+  assert.ok(noNs.includes('href="/n/archive/kept"'));
 });
 
 test("markdown: raw HTML and javascript links never become markup", () => {

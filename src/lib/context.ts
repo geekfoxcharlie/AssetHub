@@ -14,6 +14,7 @@ const MODEL = [
   "Use --provenance @sources.json for collected records, independently of the content schema: an array of {url, fetched_at, author?, published_at?, source_id?, notes?}. Omission preserves existing provenance; [] explicitly clears it. Local records and old data may omit it.",
   "Built-in source and demand schemas store source dossiers and data needs. Keep shared source records in one chosen namespace (for example sources); project demands reference them by id. Neither schema collects, scores or schedules anything.",
   "Use schema show before writing; custom project schemas are registered with schema add. Put the namespace in idfor's natural key to avoid cross-namespace id collisions. Inspect validate.findings; exit code 0 alone is not proof of a healthy tree.",
+  "Link one record with its ULID alone. Link a folder, a record path, or a text attachment with hub: `hub:notes/weekly` is relative to the current namespace, and `hub://archive/notes/weekly` names the namespace. Paths start at the namespace root. Each segment is non-empty, does not start with `.`, and contains no spaces or backslashes. The viewer rewrites these to /n/ or /r/ and does not check that the target exists.",
   "Keep source dossiers in the same project namespace as the records that cite them, unless you deliberately share a sources space. Inspect the live install with: assethub status --json.",
 ].join("\n");
 

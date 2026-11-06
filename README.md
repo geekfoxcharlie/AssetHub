@@ -44,6 +44,16 @@ A record is one folder, named by its id, containing a `record.json` and the file
 - Optional `provenance` records original source URLs and access times independently of the content schema. It is visible in `get`, `query`, and the read-only viewer; existing records remain valid.
 - The id inside `record.json` is the record's identity, so folders can be moved or renamed without breaking anything.
 
+A string value can point at another place in the store. The viewer turns that value into a link. Store the reference, not a page address.
+
+| Value | Opens |
+| --- | --- |
+| A ULID and nothing else | `/r/<id>`, which redirects to that record's current folder |
+| `hub:notes/weekly` | `/n/<current-namespace>/notes/weekly` |
+| `hub://archive/notes/weekly` | `/n/archive/notes/weekly` |
+
+`hub:` paths start at the namespace root. Each segment is non-empty, does not start with `.`, and contains no spaces or backslashes. A relative `hub:` path uses the namespace of the page that renders it. `hub://` names the namespace and works on any page. The viewer does not check that the target exists. A field shows the path without the `hub:` prefix. The same two forms are Markdown link targets, for example `[weekly](hub:notes/weekly)` and `[record](01J8AAAA9TQZ8VZEWCSRGQKP2M)`.
+
 ## Concepts
 
 | Concept | What it is |
@@ -51,7 +61,7 @@ A record is one folder, named by its id, containing a `record.json` and the file
 | Record | One folder: `record.json` plus attachments. Any folder containing `record.json` is a record; all other folders are containers. |
 | Namespace | A first-level folder in the data root, one per project. Every write names its namespace and cannot write outside it. Reads cross projects by default. |
 | Schema | A JSON Schema defining what `data` may contain. Resolved per project first, then globally, then from the built-ins (`note`, `article`, `webpage`, `post`, `image`, `file`, `source`, `demand`). |
-| Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. Markdown attachments get a table-of-contents reading page at `/n/<ns>/.../<record>/<file>`. |
+| Viewer | `assethub web`: a read-only browser page that walks the folders and renders records — text, inline images, links, attachments. A ULID or a `hub:` place reference in a string becomes a link. Markdown attachments get a table-of-contents reading page at `/n/<ns>/.../<record>/<file>`. |
 
 ## Quick start
 
