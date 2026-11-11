@@ -528,7 +528,7 @@ function isShortValue(value: unknown): boolean {
 
 /** Choose compact table columns when a folder is a homogeneous short-field inventory. */
 export function tableColumnsFor(records: RecordEntry[]): string[] | null {
-  if (records.length < 4) return null;
+  if (records.length === 0) return null;
   const schemas = new Set(records.map((r) => r.schema));
   if (schemas.size !== 1) return null;
   const longCount = records.filter((r) => {

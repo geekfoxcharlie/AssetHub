@@ -106,7 +106,7 @@ test("web: folder browsing, breadcrumb, record entries; no dotfiles", async () =
 
     const posts = await (await fetch(base + "/n/douyin-hub/zhangsan/posts")).text();
     assert.ok(posts.includes("清晨的市场"), "record title shows");
-    assert.ok(posts.includes("douyin_video"));
+    assert.ok(posts.includes('<table class="records">'), "short-field records render as a table");
     assert.ok(posts.includes(video.id));
 
     const missing = await fetch(base + "/n/douyin-hub/nope");
@@ -395,6 +395,36 @@ test("web: list titles use key/display_name and skip ULIDs", async () => {
     assert.ok(facet.includes("Estimating"));
     assert.ok(facet.includes("obj-card"));
     assert.ok(!facet.includes("[object Object]"));
+  });
+});
+
+test("web: a small homogeneous folder also renders as a table", async () => {
+  const root = tmpRoot();
+  seedDemo(root);
+  const hub = new Hub(root);
+  hub.addSchema(
+    "search_signal",
+    {
+      type: "object",
+      additionalProperties: false,
+      required: ["key", "engine"],
+      properties: { key: { type: "string" }, engine: { type: "string" }, impressions: { type: "number" }, cluster: { type: "string" } },
+    },
+    "douyin-hub",
+  );
+  for (let i = 0; i < 3; i += 1) {
+    hub.put({
+      ns: "douyin-hub",
+      dir: "signals-three",
+      schemaId: "search_signal",
+      id: hub.idfor(`web:signal:${i}`),
+      data: { key: `query ${i}`, engine: "google", impressions: 10 * (i + 1), cluster: "other" },
+    });
+  }
+  await withServer(root, async (base) => {
+    const html = await (await fetch(base + "/n/douyin-hub/signals-three")).text();
+    assert.ok(html.includes("<table class=\"records\">"), "three homogeneous short-field records render as a table");
+    assert.equal(html.includes("query 0"), true);
   });
 });
 
